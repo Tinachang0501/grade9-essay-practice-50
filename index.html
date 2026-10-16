@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>張媽菜菜館～煮一道思維作文佳餚（針對904、905、910學生段考作文缺失擬定配方）</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fffbeb',
+              100: '#fef3c7',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309',
+              800: '#92400e',
+              900: '#78350f',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK (Compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    body {
+      font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .font-serif-tc {
+      font-family: 'Noto Serif TC', Georgia, serif;
+    }
+    /* Print Optimization */
+    @media print {
+      .no-print { display: none !important; }
+      .print-only { display: block !important; }
+      body { background: white !important; color: black !important; }
+      .card-box { break-inside: avoid; border: 1px solid #ccc !important; box-shadow: none !important; margin-bottom: 1.5rem !important; }
+    }
+  </style>
+</head>
+<body class="bg-amber-50/30 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-amber-500 selection:text-white">
+
+  <!-- ==================== Header ==================== -->
+  <header class="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 text-white shadow-xl border-b border-amber-800/40 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        
+        <!-- Title & Restaurant Identity -->
+        <div>
+          <div class="flex items-center flex-wrap gap-2 mb-1">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-400/20 text-amber-300 border border-amber-400/30">
+              🍲 張媽特製主廚配方
+            </span>
+            <span class="text-xs text-amber-200/80 font-mono">六和國中部 904 · 905 · 910 共同盲點專靶實戰</span>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-extrabold font-serif-tc tracking-tight text-white flex items-center flex-wrap gap-2">
+            <span>張媽菜菜館～煮一道思維作文佳餚</span>
+            <span class="text-xs font-normal px-2.5 py-1 rounded-full bg-amber-600/70 text-amber-100 border border-amber-400/30">
+              100 題旗艦實戰擂台
+            </span>
+          </h1>
+        </div>
+
+        <!-- Student Status & Actions Bar -->
+        <div class="flex items-center flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm">
+          
+          <!-- Current Student Badge -->
+          <div id="student-badge-container" class="bg-amber-500/10 backdrop-blur-md rounded-xl px-3 py-1.5 flex items-center gap-2 border border-amber-400/30">
+            <div class="flex items-center gap-1.5 text-amber-200">
+              <span class="text-base">👤</span>
+              <span id="badge-student-info" class="font-bold text-white font-mono">未登記入席</span>
+            </div>
+            <div class="h-4 w-px bg-white/20"></div>
+            <div class="text-amber-300 font-mono font-semibold" id="badge-attempt-info">第 -- 次</div>
+            <div class="h-4 w-px bg-white/20"></div>
+            <div class="text-amber-100 font-mono flex items-center gap-1">
+              <span>⏱️</span>
+              <span id="badge-timer">00:00</span>
+            </div>
+            <button onclick="promptSwitchStudent()" class="ml-1 text-[11px] underline text-amber-300 hover:text-white transition">
+              切換
+            </button>
+          </div>
+
+          <!-- Progress & Accuracy -->
+          <div class="bg-white/10 backdrop-blur-md rounded-xl px-3 py-1.5 flex items-center gap-2.5 border border-white/10 text-xs">
+            <div>
+              <div class="text-slate-300 text-[10px]">進度</div>
+              <div class="font-bold text-white text-sm font-mono" id="progress-text">0 / 100</div>
+            </div>
+            <div class="h-6 w-px bg-white/20"></div>
+            <div>
+              <div class="text-slate-300 text-[10px]">答對率</div>
+              <div class="font-bold text-emerald-400 text-sm font-mono" id="accuracy-text">-- %</div>
+            </div>
+          </div>
+
+          <!-- Sound Toggle -->
+          <button id="sound-toggle" onclick="toggleSound()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-amber-200 hover:text-white transition" title="開關音效">
+            <span id="sound-icon">🔊</span>
+          </button>
+
+          <!-- Submit Button -->
+          <button onclick="confirmSubmitQuiz()" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md transition flex items-center gap-1.5">
+            <span>📨</span>
+            <span>交卷結算</span>
+          </button>
+
+          <!-- Diagnostic Trigger -->
+          <button onclick="openDiagnosticModal()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 border border-white/20 text-amber-200 hover:text-white font-medium text-xs transition flex items-center gap-1">
+            <span>📊</span>
+            <span>寫作體檢</span>
+          </button>
+
+          <!-- Teacher Admin Trigger -->
+          <button onclick="openTeacherAdminPrompt()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition flex items-center gap-1.5 border border-amber-300/50">
+            <span>👩‍🍳</span>
+            <span>張媽管理後台</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== Main Container ==================== -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- Pedagogical Culinary Banner -->
+    <div class="bg-white rounded-2xl shadow-sm border border-amber-200/80 p-5 sm:p-6 mb-6 relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-amber-500/5 rounded-full pointer-events-none"></div>
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div class="space-y-2 max-w-4xl">
+          <div class="flex items-center gap-2 text-amber-800 font-bold text-sm">
+            <span class="text-lg">👩‍🍳</span>
+            <span>張媽主廚說菜：如何烹調出色香味俱全的會考 6 級分思維佳餚</span>
+          </div>
+          <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+            寫作就像熬一鍋上等靚湯：若通篇只有口號而乏具體事例，如同<strong>清湯寡水無食材</strong>；若僅堆疊華麗詞藻卻因果跳躍或病句連篇，猶如<strong>狂撒味精而未煮熟生肉</strong>！針對 <strong>904、905、910 三班段考作文批改大數據</strong>，張媽精心調配出<strong>「十大思維火候秘方」共 100 道旗艦實戰</strong>：
+            篇章擴充、感官細節、段落結構、事件特寫、因果思辨、心境轉折、論述論據論證、會考常考病句辨析（連接詞/缺主受詞/詞語誤用/邏輯不合/標點誤用）、四大表達方式（寫景/議論/說明/抒情）以及章法手法深度剖析（歸納演繹/人稱/修辭/動靜/主客觀/總分總/對比烘托/虛實相生）。帶你一道道品嘗、拆解與修訂，穩奪會考滿分！
+          </p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="resetAll()" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-medium transition flex items-center gap-1">
+            <span>🔄</span> 重置作答
+          </button>
+          <button onclick="window.print()" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-medium transition flex items-center gap-1">
+            <span>🖨️</span> 列印練習卷
+          </button>
+        </div>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center gap-2" id="category-filter-bar">
+        <!-- Dynamically rendered pills -->
+      </div>
+    </div>
+
+    <!-- Quick Navigator Grid (100 Pills) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 mb-6">
+      <div class="flex items-center justify-between mb-3 text-xs">
+        <span class="font-bold text-slate-700 flex items-center gap-1.5">
+          <span>⚡ 100 道佳餚配方快速導覽</span>
+          <span class="text-slate-400 font-normal">（點擊即刻跳轉）</span>
+        </span>
+        <div class="flex items-center gap-3">
+          <span class="inline-flex items-center gap-1 text-slate-500"><span class="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block"></span> 未作答</span>
+          <span class="inline-flex items-center gap-1 text-emerald-600"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> 答對</span>
+          <span class="inline-flex items-center gap-1 text-rose-600"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> 需複習</span>
+          <button id="toggle-filter-mistakes" onclick="toggleMistakesOnly()" class="ml-2 px-2.5 py-1 rounded bg-rose-50 text-rose-700 border border-rose-200 text-xs font-medium hover:bg-rose-100 transition">
+            只看錯題 (<span id="mistake-count">0</span>)
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-10 sm:grid-cols-20 md:grid-cols-25 lg:grid-cols-50 gap-1" id="navigator-grid">
+        <!-- 1~100 pills dynamically generated -->
+      </div>
+    </div>
+
+    <!-- Mode Bar -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="text-sm font-semibold text-slate-700">
+        正在品嘗：<span id="current-view-title" class="text-amber-700 font-bold">全部 100 道思維配方</span>
+        <span class="text-slate-400 text-xs font-normal" id="current-view-count">（共 100 題）</span>
+      </div>
+      <div class="inline-flex bg-slate-200 p-0.5 rounded-xl text-xs font-medium">
+        <button id="btn-mode-quiz" onclick="setMode('quiz')" class="px-3 py-1.5 rounded-lg bg-white text-slate-800 shadow-sm font-semibold transition">
+          闖關測驗模式
+        </button>
+        <button id="btn-mode-study" onclick="setMode('study')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">
+          張媽主廚解析模式
+        </button>
+      </div>
+    </div>
+
+    <!-- Questions Container -->
+    <div id="questions-list" class="space-y-6">
+      <!-- Question cards injected via JS -->
+    </div>
+
+    <!-- Bottom Submit Call-to-action -->
+    <div class="mt-10 p-6 bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 rounded-3xl shadow-xl text-white text-center flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="text-left">
+        <h3 class="text-lg font-bold font-serif-tc">🍲 思維佳餚火候已足？立即交卷讓張媽為您打分！</h3>
+        <p class="text-xs text-amber-100 mt-1">系統將記錄您的作答分數、嘗試次數與花費時間，並匯總至張媽後台數據庫。</p>
+      </div>
+      <button onclick="confirmSubmitQuiz()" class="px-6 py-3 rounded-2xl bg-white hover:bg-amber-50 text-slate-900 font-extrabold text-sm shadow-lg transition shrink-0 flex items-center gap-2">
+        <span>✨</span>
+        <span>完成並交卷結算</span>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ==================== Footer ==================== -->
+  <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4">
+      <p class="font-serif-tc font-semibold text-slate-700 text-sm mb-1">
+        六和高中附設國中部 · 張媽菜菜館～煮一道思維作文佳餚（100 題旗艦版）
+      </p>
+      <p>針對 904 · 905 · 910 學生段考作文缺失擬定配方 ｜ 篇章擴充 · 感官細節 · 段落結構 · 具體事件 · 因果思辨 · 心境轉折 · 論述論據論證 · 會考病句辨析 · 景議說抒 · 章法結構手法</p>
+    </div>
+  </footer>
+
+  <!-- ==================== Modal 1: Student Identification Modal ==================== -->
+  <div id="student-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 relative border border-amber-200 animate-in fade-in zoom-in duration-200">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 mx-auto mb-3 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-3xl shadow-inner">
+          🍲
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 font-serif-tc">張媽菜菜館 · 顧客入席登記</h2>
+        <p class="text-xs text-slate-500 mt-1">請填寫基本資料，主廚將為您記錄每一次作答歷程與時間</p>
+      </div>
+
+      <form id="student-login-form" onsubmit="handleStudentLogin(event)" class="space-y-4">
+        <!-- Class Select -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">班級 Class <span class="text-rose-500">*</span></label>
+          <select id="login-class" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-sm bg-white font-medium">
+            <option value="">-- 請選擇班級 --</option>
+            <option value="904">904 班</option>
+            <option value="905">905 班</option>
+            <option value="910">910 班</option>
+          </select>
+        </div>
+
+        <!-- Seat Select -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">座號 Seat Number <span class="text-rose-500">*</span></label>
+          <select id="login-seat" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-sm bg-white font-medium">
+            <option value="">-- 請選擇座號 --</option>
+          </select>
+        </div>
+
+        <!-- Name Input -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">學生姓名 Name <span class="text-rose-500">*</span></label>
+          <input type="text" id="login-name" required placeholder="請輸入真實姓名（例如：陳湘璿）" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-amber-500 focus:ring-2 focus:ring-amber-200 outline-none text-sm">
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" class="w-full py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-extrabold text-sm shadow-lg shadow-amber-500/30 transition flex items-center justify-center gap-2">
+            <span>🔥</span>
+            <span>入席開桌，開始品嘗 100 道佳餚</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== Modal 2: Diagnostic & Result Modal ==================== -->
+  <div id="diagnostic-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 sm:p-8 relative border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <button onclick="closeDiagnosticModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 text-2xl font-bold leading-none">
+        &times;
+      </button>
+
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl font-bold">
+          📊
+        </div>
+        <div>
+          <h2 class="text-xl font-bold text-slate-900 font-serif-tc">思維作文佳餚 · 體檢診斷書</h2>
+          <p class="text-xs text-slate-500" id="diag-subtitle">六和國三 904 · 905 · 910 專靶實時能力評估</p>
+        </div>
+      </div>
+
+      <!-- Student Card in Result -->
+      <div class="bg-amber-50 rounded-2xl p-3.5 mb-4 border border-amber-200/60 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-amber-900" id="diag-student-name">--</span>
+          <span class="px-2 py-0.5 rounded bg-amber-200/80 text-amber-900 font-mono" id="diag-student-class">--</span>
+          <span class="px-2 py-0.5 rounded bg-amber-200/80 text-amber-900 font-mono" id="diag-attempt-badge">第 1 次嘗試</span>
+        </div>
+        <div class="font-mono text-slate-600" id="diag-time-spent">⏱️ 作答時間：00:00</div>
+      </div>
+
+      <!-- Overview Stats -->
+      <div class="grid grid-cols-3 gap-3 my-4 bg-slate-50 p-4 rounded-2xl border border-slate-200/60 text-center">
+        <div>
+          <div class="text-xs text-slate-500">已作答題數</div>
+          <div class="text-xl font-bold font-mono text-slate-800" id="diag-answered">0 / 100</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500">答對題數</div>
+          <div class="text-xl font-bold font-mono text-emerald-600" id="diag-correct">0</div>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500">綜合成績</div>
+          <div class="text-xl font-bold font-mono text-amber-600" id="diag-rate">0 分</div>
+        </div>
+      </div>
+
+      <!-- Dimension Breakdown -->
+      <div class="space-y-3.5 my-5">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400">十大思維火候秘方熟練度</h3>
+        <div id="diagnostic-bars" class="space-y-2.5">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+
+      <!-- Personalized Advice Prescription -->
+      <div class="bg-amber-50/70 border border-amber-200 rounded-2xl p-4 text-xs leading-relaxed text-amber-900">
+        <div class="font-bold flex items-center gap-1.5 mb-1.5 text-amber-950 text-sm">
+          <span>👩‍🍳</span> 張媽主廚專屬評語與處方箋
+        </div>
+        <div id="diagnostic-prescription">
+          尚未開始作答，請至少完成 10 道以上題目以生成精準分析。
+        </div>
+      </div>
+
+      <div class="mt-6 flex items-center justify-between">
+        <button onclick="confirmSubmitQuiz()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition flex items-center gap-1.5 shadow">
+          <span>📨</span>
+          <span>確認繳交此成績</span>
+        </button>
+        <button onclick="closeDiagnosticModal()" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-medium text-xs transition">
+          關閉診斷書
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== Modal 3: Teacher Admin Dashboard ==================== -->
+  <div id="teacher-admin-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-6">
+    <div class="bg-white rounded-3xl shadow-2xl max-w-6xl w-full p-5 sm:p-7 relative border border-amber-300 max-h-[92vh] flex flex-col overflow-hidden">
+      
+      <!-- Admin Header -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-2xl font-bold shadow-md">
+            👩‍🍳
+          </div>
+          <div>
+            <h2 class="text-xl font-extrabold text-slate-900 font-serif-tc flex items-center gap-2">
+              <span>張媽菜菜館 · 學生作答管理後台</span>
+              <span class="text-xs font-mono font-normal px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                ● 雲端連線同步 (100題旗艦版)
+              </span>
+            </h2>
+            <p class="text-xs text-slate-500">掌握 904 · 905 · 910 學生分數、嘗試次數、作答時間與詳細錯題</p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="fetchAdminData()" class="px-3 py-1.5 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition flex items-center gap-1">
+            <span>🔄</span> 重新整理
+          </button>
+          <button onclick="exportToCSV()" class="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow transition flex items-center gap-1.5">
+            <span>📥</span> 匯出 Excel (CSV)
+          </button>
+          <button onclick="closeTeacherAdmin()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold ml-2">
+            &times;
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4 shrink-0">
+        <div class="bg-amber-50/60 border border-amber-200/60 rounded-2xl p-3">
+          <div class="text-[11px] text-amber-800 font-medium">總作答人數（學生數）</div>
+          <div class="text-2xl font-extrabold font-mono text-amber-950 mt-0.5" id="admin-kpi-students">0 位</div>
+        </div>
+        <div class="bg-indigo-50/60 border border-indigo-200/60 rounded-2xl p-3">
+          <div class="text-[11px] text-indigo-800 font-medium">總作答人次（累計次數）</div>
+          <div class="text-2xl font-extrabold font-mono text-indigo-950 mt-0.5" id="admin-kpi-attempts">0 次</div>
+        </div>
+        <div class="bg-emerald-50/60 border border-emerald-200/60 rounded-2xl p-3">
+          <div class="text-[11px] text-emerald-800 font-medium">三班平均分數</div>
+          <div class="text-2xl font-extrabold font-mono text-emerald-950 mt-0.5" id="admin-kpi-avg-score">-- 分</div>
+        </div>
+        <div class="bg-purple-50/60 border border-purple-200/60 rounded-2xl p-3">
+          <div class="text-[11px] text-purple-800 font-medium">平均作答耗時</div>
+          <div class="text-2xl font-extrabold font-mono text-purple-950 mt-0.5" id="admin-kpi-avg-time">--</div>
+        </div>
+      </div>
+
+      <!-- Filter & Search Toolbar -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-3 shrink-0">
+        <div class="flex items-center gap-2">
+          <!-- Class Filter -->
+          <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold text-slate-600">
+            <button onclick="filterAdminClass('ALL')" id="tab-class-all" class="px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-xs">全部班級</button>
+            <button onclick="filterAdminClass('904')" id="tab-class-904" class="px-2.5 py-1 rounded-lg hover:text-slate-900">904 班</button>
+            <button onclick="filterAdminClass('905')" id="tab-class-905" class="px-2.5 py-1 rounded-lg hover:text-slate-900">905 班</button>
+            <button onclick="filterAdminClass('910')" id="tab-class-910" class="px-2.5 py-1 rounded-lg hover:text-slate-900">910 班</button>
+          </div>
+
+          <!-- Sort Select -->
+          <select id="admin-sort-by" onchange="renderAdminTable()" class="px-3 py-1.5 rounded-xl border border-slate-300 text-xs bg-white font-medium outline-none">
+            <option value="time_desc">繳交時間（最新優先）</option>
+            <option value="score_desc">分數（最高優先）</option>
+            <option value="seat_asc">座號順序（方便登記成績）</option>
+            <option value="attempts_desc">嘗試次數（由多到少）</option>
+          </select>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative">
+          <input type="text" id="admin-search-input" oninput="renderAdminTable()" placeholder="🔍 搜尋學生姓名或座號..." class="w-full sm:w-56 pl-3 pr-8 py-1.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-amber-200 outline-none">
+        </div>
+      </div>
+
+      <!-- Submissions Table Container -->
+      <div class="flex-1 overflow-y-auto border border-slate-200 rounded-2xl">
+        <table class="w-full text-left text-xs text-slate-600">
+          <thead class="bg-slate-50 text-slate-700 font-bold border-b border-slate-200 sticky top-0 z-10">
+            <tr>
+              <th class="px-4 py-3">班級</th>
+              <th class="px-3 py-3">座號</th>
+              <th class="px-4 py-3">姓名</th>
+              <th class="px-4 py-3">成績 / 題數</th>
+              <th class="px-3 py-3">嘗試次數</th>
+              <th class="px-4 py-3">作答耗時</th>
+              <th class="px-4 py-3">繳交時間</th>
+              <th class="px-4 py-3 text-right">錯題詳情</th>
+            </tr>
+          </thead>
+          <tbody id="admin-table-body" class="divide-y divide-slate-100">
+            <!-- Injected dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== JavaScript Logic ==================== -->
+  <script>
+    // Embedded 100 Questions
+    const questions = [{"id": 1, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "單句擴寫：從「空洞陳述」到「意象延展」", "stem": "學生原文寫道：「國三生活很忙，時間總是不夠用，大家都覺得壓力很大。」這句話最大的問題在於過度空泛籠統。若要將此句擴展為具備「生活臨場感」與「情境烘托」的文句，下列哪一個改寫最具擴展張力？", "options": ["A. 國三的生活真的非常忙碌，從早自習到第九節課，每個人都在抱怨時間不夠，壓力大到受不了。", "B. 晨曦未露，倒數看板上的刺眼紅字已悄然翻動；書桌上層疊的模擬考卷與未乾的筆墨，正無聲啃噬著課桌前那張張泛青的臉龐。", "C. 因為國三面臨升學大考，所以我們要學會管理時間，不要浪費每一分每一秒，才能減輕內心的壓力。", "D. 時間就像流水一樣一去不復返，如果我們不抓緊時間讀書，最後考試成績一定會很不理想。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。原句「時間不夠、壓力大」是平鋪直敘的結論。(B) 選項善用「晨曦未露」、「倒數紅字」、「層疊考卷」、「泛青的臉龐」等具體物象與特寫鏡頭，將抽象的「忙碌與壓力」化為可感知的沉重氛圍。(A) 只是重複原句的口語抱怨；(C)、(D) 則落入說教與陳腔濫調，未達情境擴寫效果。"}, {"id": 2, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "論點深化：從「非黑即白」到「雙向思辨」", "stem": "在談到「休息與自我留白」時，一位同學寫下：「我覺得只要休息就是在浪費生命，國三只有拚命讀書才會有未來。」這種思維容易讓文章顯得偏狹極端。若要在此段加入「深層思辨」進行篇幅擴充，補入下列哪一段論述最能使立意昇華？", "options": ["A. 不過後來媽媽告訴我，身體如果搞壞了就什麼都沒有了，所以我現在每天晚上十點就去睡覺。", "B. 其實許多科學家都證明，休息是為了走更長遠的路，所以偶爾滑一下手機、打打手遊也是很合情合理的。", "C. 弓拉得太滿終將失去韌性，琴弦繃得過緊必奏出雜音；自我留白並非怠惰逃避，而是讓疲憊的靈魂在換氣中蓄積前行的彈力。", "D. 雖然讀書真的很辛苦，但只要一想到考上第一志願後可以痛快玩三個月，我就能咬緊牙關繼續撐下去。"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。(C) 選項運用「弓與琴弦」的比喻，點破「留白」不是「放棄」，而是維持續航力的必要調節，展現了由淺入深的思辨厚度。(A) 只是引述長輩命令；(B) 將留白簡化為滑手機的藉口；(D) 停留在功利的延宕享受，皆無法達到思想深化與文氣擴展。"}, {"id": 3, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "段落擴寫：加入「心理獨白」打破流水帳", "stem": "學生寫道：「週末朋友找我出去打球，我想了想，最後決定拒絕他們，留在家裡讀書。」若要在這段話中插入「天人交戰的心理微雕」，使篇幅與層次大幅擴展，應在何處加入哪一段內容最適當？", "options": ["A. 在「決定拒絕」前插入：「球鞋磨蹭地面的摩擦聲彷彿已在耳畔迴響，但指尖觸及泛黃筆記時，那串赤紅的考分如警鐘鳴響，拉扯著我渴望奔馳的雙足。」", "B. 在「留在家裡」後插入：「因為打球很容易受傷，如果手扭到了就不能寫字，到時候考試考不好會被張媽罵。」", "C. 在「朋友找我」前插入：「那天是個晴朗的星期天，天氣非常好，萬里無雲，太陽高高掛在天空中，氣溫大概有二十八度。」", "D. 在「決定拒絕」前插入：「因為爸爸昨天才剛給我買了一套新的數學題庫，花了不少錢，我不好意思不把它寫完。」"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。擴充段落的關鍵在於捕捉「抉擇瞬間的拉扯」與「內心微觀感受」。(A) 透過「球鞋磨擦聲」與「赤紅考分」的感官對比，精準描寫友誼呼喚與升學現實的心靈衝突。(B) 理由瑣碎；(C) 屬無關緊要的天氣描寫；(D) 焦點轉移至金錢，皆未能厚植心理深度。"}, {"id": 4, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "文思開展：破題段的立體化擴充", "stem": "許多同學寫作文開頭只抄錄引導卡片：「時間與精力有四種選擇：課業、社團、社交、休息，我選課業。」若要讓首段從死板的卡片抄寫，擴充為具有「文采與哲思」的引導段，下列何者結構最完美？", "options": ["A. 題目給的四張卡片是課業、社團、社交和休息，這四個都很重要，但國三我們必須選最重要的，所以大家都會選課業。", "B. 國三是一場有限資源的博弈，四個九宮格般的選項攤在眼前，如同四條分岔的航道；在無可迴避的取捨中，我們學會了替青春下注。", "C. 人生本來就要做很多選擇，不管是吃飯、穿衣服還是讀書。國三的選擇更重要，所以我今天想要來跟大家分享我的選擇。", "D. 張媽在台上發下了一張作文單，上面寫著時間管理四分格，看著這四個格子，全班同學都發出了一陣長長的嘆息聲。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 將圖表轉化為「有限資源的博弈」與「分岔航道」，展現宏觀的生命哲思與鮮明的修辭意象。(A) 只是口語複述題目；(C) 舉例過於瑣碎幼體化；(D) 僅記錄發考卷現場，立意未提煉。"}, {"id": 5, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "結尾昇華：由「口號總結」擴展為「生命餘韻」", "stem": "文章末段若只寫：「所以大家一定要好好努力，不要放棄希望，才能考上理想的學校！」會流於喊口號。若要將結尾擴展為「收束前文、餘音繞梁」的佳構，下列改寫何者最優？", "options": ["A. 總而言之，時間管理是成功的基石，希望我們每個人都能在剩下的幾百天裡，克服誘惑，勇往直前，邁向勝利！", "B. 放棄那一場球敘的歡笑，並非向青春繳械，而是在靜默的自律中，為未來的羽翼鋪陳翱翔的長風；行囊雖被割捨，步履卻愈發輕捷堅毅。", "C. 國三真的太苦了，但是古人說得好：不經一番寒徹骨，焉得梅花撲鼻香。只要考完試，這一切的犧牲就都是值得的了。", "D. 雖然不知道能不能考上第一志願，但反正我已經盡力了，接下來就看老天的安排，希望努力不會白費。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 回扣前文的具體割捨（球敘歡笑），進而提煉出「自我克制與未來承擔」的哲思，語意雋永。(A) 是典型的演講喊口號；(C) 濫用套板古詩且言不由衷；(D) 語氣消極鬆散，缺乏收束力道。"}, {"id": 6, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "事例擴寫：由「概括交代」到「動態鏡頭」", "stem": "同學描寫補習生活寫道：「那段時間我補習補到很晚，每天都非常累。」若要將此句擴展為一段 100 字左右、具畫面感的動態寫實，下列哪段擴寫最成功？", "options": ["A. 補習班真的不是人待的地方，張媽講課講很快，冷氣又開得很冷，同學都在打瞌睡，我每天回到家都已經十點半了，洗完澡倒頭就睡。", "B. 深夜十點，自習室的白熾燈將桌沿的講義照得泛冷。指節被原子筆壓出一道深紅的凹痕，揉了揉乾澀發燙的眼角，我將冷掉的便當推至一旁，在街燈投射的單車影子下，踏著沉重的夜色踽踽獨行。", "C. 很多補習班的課程都安排得很滿，星期一補數學、星期二補英文、星期三理化，一直補到週末，大家都很累，根本沒有時間休息。", "D. 為什麼現在的國三生都要去補習？因為升學制度太競爭了，如果大家都不補習，那該有多好，我們就可以做自己想做的事情了。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 鏡頭層層推進：白熾燈的冷光、指節深紅的凹痕、乾澀發燙的眼、推開冷便當的動作、踏著夜色的單車身影，透過細膩的動態與光影刻劃，具象展現「疲累與堅持」。其他選項或為情緒宣洩、流水帳課表或泛泛議論。"}, {"id": 7, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "立意擴充：由「個人得失」昇華為「成長共鳴」", "stem": "批改時發現同學多半將「放棄社團」歸咎於「沒辦法，爸媽逼的」。若要將被動的無奈，擴充昇華為主動的成長自覺，下列哪一種思路擴寫最具格局？", "options": ["A. 雖然很討厭爸媽的專制，但想想他們也是花錢讓我讀書，我就只好忍氣吞聲，把吉他收起來。", "B. 我後來跟爸媽大吵了一架，最後大家各退一步，我答應只要模擬考進步五分，就可以在週末彈半小時吉他。", "C. 輕撫著塵封的琴弦，我終究領悟：成長的重量在於懂得排序。暫時收起音符並非向熱愛道別，而是為了替未來鋪出更寬廣的舞台，讓旋律在破曉後響得更昂揚。", "D. 反正到了高中還有熱音社，現在少彈一年吉他其實也沒差，畢竟考上好高中才有更好的樂器可以玩。"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。(C) 選項展現主動的生命自覺——「懂得排序、暫時沉潛以成全未來」，將抱怨化為富有詩意的沉澱與自持。(A) 停留在隱忍；(B) 是討價還價的家務事；(D) 口吻隨便輕浮，立意淺薄。"}, {"id": 8, "cat": "作文擴充", "cat_name": "篇章擴充與文思延展", "title": "篇幅撐實：拒絕「水字數」的有效擴展策略", "stem": "在會考寫作中，若遇到文章字數不足 500 字，下列哪一種擴充策略屬於「有效厚植篇幅」而非「無效灌水廢話」？", "options": ["A. 大量使用「而且、然後、所以、總之」等連接詞，並把一句話換不同說法重複講三次。", "B. 在同一段落內列舉五個好朋友的名字，並把每個朋友的生日和興趣都逐一介紹清楚。", "C. 針對文章中最關鍵的「抉擇衝突瞬間」，補入當下的外在環境細節、感官刺激與內心深層的猶豫歷程。", "D. 把題目引導卡片上的四個象限文字，一字不漏地抄寫在每一段的段首作為裝飾。"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。張媽最忌諱「車輪話跳針」與「抄錄題幹灌水」 (A、D) 或「寫與主旨無關的流水帳人物」 (B)。真正能拉高評分的擴寫，是「放慢鏡頭速度」，在關鍵轉折處精雕細琢環境氛圍、五感反應與心理掙扎 (C)。"}, {"id": 9, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "感官辨識：五感摹寫的層次判定", "stem": "下列描寫國三伏案夜讀的文句中，哪一句同時融匯了「聽覺」與「觸覺」的細膩刻劃？", "options": ["A. 窗外的夜色如墨汁般濃稠，遠處高架橋上的車燈像一條微弱流動的火龍。", "B. 靜謐的深夜裡，唯有時鐘秒針規律而清脆的滴答聲，伴著指縫間被汗水浸潤得滑膩發燙的筆桿。", "C. 那碗飄著濃郁麻油與薑片香氣的熱湯，撫慰了我飢腸轆轆的胃囊。", "D. 模擬考成績揭曉那一刻，教室裡的空氣彷彿瞬間降至冰點，安靜得連一根針掉在地上都能聽見。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 中「時鐘秒針規律而清脆的滴答聲」為【聽覺】；「指縫間被汗水浸潤得滑膩發燙的筆桿」為【觸覺】。(A) 純屬視覺；(C) 為嗅覺與味覺；(D) 空氣降至冰點為比喻心理感覺，掉針聲音為誇飾聽覺，並無精微的生理觸覺刻劃。"}, {"id": 10, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "「告知」與「展現」：Show, Don't Tell 的判斷", "stem": "寫作常犯「直接告知情緒（Tell）」而非「以細節展現情境（Show）」的毛病。下列哪一組改寫成功將「我很緊張」轉化為生動的 Show？", "options": ["A. 原句：我很緊張。 -> 改寫：我當時心裡真的非常非常緊張，整個人緊張到快要瘋掉了。", "B. 原句：我很緊張。 -> 改寫：考卷發下的剎那，手心冷汗將答案卡一角洇成深灰，齒關無意識地輕叩，喉頭像塞了一團乾燥的棉花。", "C. 原句：我很緊張。 -> 改寫：大家都知道大考的時候每個人都會緊張，這是一種正常的生理現象，不用太介意。", "D. 原句：我很緊張。 -> 改寫：如果換作是你站在那個考場上，相信你一定也會跟我一樣緊張得手足無措。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。Show, Don't Tell 是高分作文的金科玉律。(B) 完全不提「緊張」二字，卻透過手心冷汗浸濕答案卡、齒關輕叩、喉頭如塞乾燥棉花等生理生理微反應，讓讀者感同身受。(A) 只是一再複誦抽象詞；(C) 成了科學常識說明；(D) 是向讀者無謂喊話。"}, {"id": 11, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "環境寄情：借景抒情的細節融會", "stem": "為了表現「忍痛放棄熱愛的羽球訓練，留在教室讀書」時的落寞與堅決，下列哪一個環境細節描寫最能烘托這份心境？", "options": ["A. 操場上陽光燦爛，同學們都在開心地追逐嬉戲，小鳥在枝頭唱著動聽的歌，花兒隨風搖曳，美不勝收。", "B. 透過蒙著薄塵的教室玻璃，遠方球館的鐵皮屋頂在斜陽下閃著刺目白光；球拍擊中羽毛的清脆破空聲隨風斷續飄來，像一記記輕敲在胸口的鈍響。", "C. 教室裡的日光燈壞了兩盞，天花板上的電風扇吱吱作響，地板上有幾片被踩碎的餅乾屑，環境相當髒亂。", "D. 外面的天氣突然變得很陰暗，接著颳起大風下起了暴盆大雨，雷聲轟隆轟隆響個不停，把大家嚇了一大跳。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 借「蒙塵的玻璃（象徵隔閡）」、「斜陽刺目白光」以及遠處飄來的「羽球破空聲化為心頭鈍響」，將聽覺與視覺細節轉化為內在的心碎與牽掛，意境深沉。(A) 是幼稚園作文常見的套版樂景，與落寞心境毫無交集；(C) 瑣碎無關；(D) 人造狗血暴雨，刻意且浮誇。"}, {"id": 12, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "動態捕捉：動作細節的精準性", "stem": "在描繪「下定決心收起手機，全力投入複習」時，哪一個文句的動作細節最具「儀式感」與「堅定感」？", "options": ["A. 我把手機拿起來看了一下，然後按下了關機鍵，放進抽屜裡，接著拿出課本開始看書。", "B. 拇指在漆黑的螢幕上懸停了三秒，我終究按下了側邊鍵；隨著微弱的震動停歇，我將那面曾讓我沉淪的光鏡反扣在抽屜最深處，鎖上鑰匙，抽出泛黃的筆記。", "C. 手機真是害人不淺的東西，我今天決定不玩手機了，大家都要向我看齊，克制自己的欲望。", "D. 我把手機丟在床上，雖然很想再滑一下，但想到明天要考試，我只好很不情願地走回書桌。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 捕捉了極具電影感的特寫動作：「拇指懸停三秒」、「微弱震動停歇」、「光鏡反扣」、「鎖上抽屜」，連續動詞具體展現了由猶豫到果決的意志轉變。(A) 是白開水流水帳；(C) 說教空泛；(D) 語氣散漫軟弱。"}, {"id": 13, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "光影描寫：氛圍渲染的細微度", "stem": "同學欲描摹「清晨六點出門搭校車上學時的孤獨與堅持」，下列哪一句善用「光影色彩」營造了恰到好處的氛圍？", "options": ["A. 早上六點的天氣很黑，馬路上沒有什麼人，我和媽媽走在路上覺得很冷清。", "B. 天際尚是一片深黛，霧氣漫在路燈昏黃的光暈下；我的影子被拉得極細極長，孤獨地覆在覆著薄霜的柏油路上，每一步都踏出與黑夜對峙的脆響。", "C. 太陽公公還沒起床，月亮姐姐還掛在天上，微風輕輕吹過我的臉頰，感覺非常舒服愜意。", "D. 街上的紅綠燈一直在閃，公車站牌那裡擠滿了穿校服的學生，大家一邊吃早餐一邊背單字。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 運用「深黛」、「昏黃光暈」、「極細極長影子」、「薄霜」的光影與色彩漸層，烘托出晨曦孤軍奮戰的冷冽與毅力。(A) 敘述平乏；(C) 擬人幼體化且情調不合；(D) 人群喧雜，失去了「孤獨堅毅」的主軸。"}, {"id": 14, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "微觀特寫：試卷上的情感寄託", "stem": "許多同學在文章中提到「成績不理想」，但往往一筆帶過「我考得很爛」。下列哪一段能透過「考卷上的具體物象」傳達出深沉的受挫感？", "options": ["A. 考卷發下來時我發現我只考了六十分，我整個人心情低落到了極點，覺得自己真是一個失敗者。", "B. 墨紅的「58」分像兩把帶刺的鐵鉤，狠狠穿透了整張考卷的頁首；那一道道被紅筆斜劃的叉痕，宛若一條條難以癒合的傷口，在慘白的紙面上猙獰地嘲弄著我的徒勞。", "C. 這次的考試題目真的出太難了，全班幾乎都沒有及格，所以張媽非常生氣，要求我們每個人抄寫課文五遍。", "D. 看著分數，我心裡想：完蛋了，回家一定會被媽媽用藤條修理，我該怎麼跟家人交代呢？"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 運用微觀修辭：「帶刺鐵鉤」、「斜劃叉痕如傷口」、「慘白紙面嘲弄」，將冰冷的分數轉化為視覺與心理上的痛楚體驗。(A) 僅給出情緒結論；(C) 卸責歸咎題目難；(D) 描寫淪為家庭處罰的口語恐懼。"}, {"id": 15, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "人物神態：捕捉母愛或親情互動的細節", "stem": "描寫國三夜讀時母親的默默陪伴，下列哪一種神態描寫最能避免俗套（「端牛奶說加油」）且深具感染力？", "options": ["A. 媽媽總是會在晚上十點半端一杯熱牛奶進來，溫柔地對我說：「兒子，辛苦了，趕快喝完去睡覺吧！」", "B. 門縫悄然被推開半寸，一道極輕的足音在房門口止步。一只溫熱的保溫杯靜置在桌角，杯蓋上貼著一張字跡微顫的便條；轉身望去，微掩的門隙中，母親鬢角不知何時又添了幾縷霜白。", "C. 媽媽在客廳看電視看得很小聲，怕吵到我讀書，我覺得媽媽真是世界上最偉大的人，我一定要孝順她。", "D. 每次只要我一說肚子餓，媽媽就會馬上跑去廚房煮宵夜給我吃，不管是水餃還是泡麵，都充滿了愛的味道。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 捕捉了「門縫半寸」、「極輕足音」、「桌角保溫杯」、「微顫便條」與「母親鬢角的霜白」，動作克制卻含蓄深情，展現了高層次的親情刻劃。(A) 是千篇一律的課本套話；(C) 與 (D) 情感表達直白且流於瑣碎。"}, {"id": 16, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "嗅覺與味覺：生活記憶的感官錨定", "stem": "下列關於「留白時放鬆片刻」的文句中，哪一句巧妙藉由「嗅覺記憶」喚醒了深層心靈感受？", "options": ["A. 走到陽台吹風，空氣中飄來隔壁烘焙坊剛出爐的焦糖麥香，微甜的暖意鑽入鼻腔，瞬間融化了被考題凍結整晚的神經。", "B. 我深深吸了一口新鮮空氣，覺得外面的空氣比教室裡好多了，心情也跟著放鬆了起來。", "C. 走到陽台喝水，清涼的水流過喉嚨，整個人感覺清醒了不少，可以繼續回去奮鬥了。", "D. 陽台上有媽媽種的許多綠色植物，看著綠色的葉子，我的眼睛疲勞得到了很大的緩解。"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。(A) 「烘焙坊焦糖麥香」的嗅覺引導，精確具象化了「暖意化解緊繃」的心靈轉換。(B) 的「新鮮空氣」空泛抽象；(C) 屬味覺/觸覺且描寫平淡；(D) 屬視覺護眼常識，缺乏深層情感共鳴。"}, {"id": 17, "cat": "細節描寫判斷", "cat_name": "感官摹寫與細節刻劃", "title": "細節取捨：去除干擾主旨的贅餘細節", "stem": "細節描寫並非「越多越好」。閱讀下方描寫「考前衝刺取捨」的段落，哪一句屬於「干擾主題、應當刪除」的無效細節？\n「(甲)教室後方黑板的倒數日曆只剩雙位數，沙沙的翻卷聲在寂靜中格外刺耳。(乙)我低頭看著昨天剛花八百元買的新運動鞋，上面的藍色鞋帶繫得非常工整。(丙)鉛筆在理化圖表上劃出一道道精密的切線，汗水自額角滲出，在稿紙邊緣暈開微黃的濕痕。(丁)在這一刻，任何嬉鬧都成了奢侈，唯有筆尖的前進能安撫心底的焦慮。」", "options": ["(甲)", "(乙)", "(丙)", "(丁)"], "answer": 1, "analysis": "【張媽叮嚀】選 (乙)。本段主旨是「考前衝刺的肅穆專注與取捨心境」，(甲)營造氛圍、(丙)特寫專注神態、(丁)昇華主題；唯獨 (乙) 突然描寫運動鞋的價格與鞋帶，與考前衝刺的情緒張力毫無內在連結，純屬走神贅筆，應堅決刪除。"}, {"id": 18, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "結構診斷：抓出「頭重腳輕」的病因", "stem": "某生作文全文三段：第一段（250字）大談時間管理理論與古人名言；第二段（180字）列舉朋友出遊與讀書的選擇；第三段（僅40字）：「所以我決定要好好分配時間，這樣才能考上好高中。」這篇文章在「結構完整度」上的最大硬傷是什麼？", "options": ["A. 題目引導的第一個象限沒有完整抄完。", "B. 比例嚴重失衡，引論過大而結尾如斷崖收筆，缺乏心境昇華與經驗反思。", "C. 沒有在第二段描寫至少三位以上同學的家庭背景。", "D. 名人名言引用得太少，應該每段都引用兩句名言佳句。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。這是國三生最常見的「斷崖式結尾」或「頭重腳輕」。開頭高談闊論，主體段未充分開展個人經驗，結尾更草草以 40 字呼喊口號收場，嚴重缺乏思辨深度與結構圓融性。"}, {"id": 19, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "承接句檢驗：段落過渡的無縫銜接", "stem": "第一段寫「進入九年級後面對升學排山倒海的壓力，被迫站在取捨十字路口」；第二段欲切入「自己曾忍痛放棄熱愛的畫畫比賽」。下列哪一個句子作為兩段之間的「過渡承接句」最為自然流暢？", "options": ["A. 講完了大道理，接下來我就來談談我自己放棄畫畫的故事吧！", "B. 在這場名為升學的洪流中，我所割捨下的第一份行囊，便是曾伴我走過無數晴雨的繪畫調色盤。", "C. 畫畫是我從小到大的興趣，每次只要我不開心就會去畫畫，因為畫畫真的非常有趣。", "D. 但是每個人都有不同的選擇，有的人選擇打球，有的人選擇睡覺，而我的選擇是不要畫畫。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 承接上一段的「升學洪流」，並將具體事件化為「割捨下的第一份行囊：繪畫調色盤」，意象連貫，文氣水到渠成。(A) 是打破第四面牆的口語出戲；(C) 突然另起爐灶缺乏銜接；(D) 語氣零碎幼稚。"}, {"id": 20, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "「轉折」之妙：第三段如何有效翻轉深化", "stem": "起承轉合中，「轉」是決定 4 級分躍升至 5~6 級分的關鍵。如果第二段寫「放棄了社交與娛樂，埋頭苦讀，生活變得單調枯燥」，第三段的「轉折」應朝哪一個方向鋪展最能顯出思辨層次？", "options": ["A. 轉折描寫自己終於受不了了，決定徹底擺爛，跟著同學去網咖通宵打遊戲。", "B. 轉折指出「一味的壓榨並非正道，真正的專注需要適時的呼吸留白」，進而反思過度割捨帶來的精神反噬。", "C. 轉折描寫班上有一位不讀書的同學考得比自己還好，讓自己覺得非常憤憤不平。", "D. 轉折描寫有一天走在路上撿到了一百元，心情突然變好了，讀書也變得有精神了。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。成熟的轉折在於「思想的再省思」——從盲目的苦熬壓榨，轉折體悟到「有張有弛、留白蓄能」的真諦，展現了立意上的自我修正與哲理深化。(A) 走極端負面；(C) 偏離主旨成同儕嫉妒；(D) 荒誕無稽。"}, {"id": 21, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "首尾呼應：檢查文章的閉環完整性", "stem": "小華在文章第一段以「童年時總想要一把能抓住所有糖果的巨勺」破題，比喻年少時對課業、朋友、興趣樣樣貪得無厭。若要在第四段結尾達成精妙的「首尾呼應」，下列哪一個結尾設計最理想？", "options": ["A. 總而言之，糖果吃多了容易蛀牙，所以我們現在國三了，大家應該少吃糖果多讀書。", "B. 原來，成長的行囊並不需要那把貪婪的巨勺；當我懂得鬆開指縫、放下繽紛的糖衣，手中緊握的那顆名為理想的種子，方能在汗水的澆灌中破土抽芽。", "C. 想到小時候那把想要糖果的勺子，我就覺得自己小時候真的很幼稚，現在的我已經完全長大了。", "D. 國三的我們雖然不能吃糖果，但是只要考上好高中，想要買多少糖果都有可能。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 巧妙回扣首段「巨勺與糖果」的隱喻，並將其昇華為「鬆開貪婪、緊握理想種子」的哲思，形成意象閉環，結構嚴密圓融。(A)、(D) 把隱喻當成真吃糖；(C) 評價扁平缺乏文采。"}, {"id": 22, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "段落切割：避免「一段到底」的巨石段", "stem": "有些同學整篇作文將近 600 字「完全不分段」，造成張媽閱讀窒息。依照寫作規範，一篇標準的會考國三記敘兼抒情說理文，切分成幾段最符合清晰流暢的黃金比例？", "options": ["A. 2段（前半段講道理，後半段講故事）", "B. 4～5段（起：引導破題；承：核心事例；轉：衝突反思；合：哲理收束）", "C. 8～10段（每兩句話就換一行分一段，看起來比較多）", "D. 完全不需要分段，只要文字寫得夠優美，一段到底最能展現氣勢。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。4～5 段是考場作文公認的最佳結構：起（破題引論，約100字）、承（個人經驗敘事特寫，約150-200字）、轉（心理轉折與思辨探討，約150-200字）、合（首尾呼應與哲思昇華，約100-150字），兼顧敘事張力與說理節奏。"}, {"id": 23, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "偏題檢查：段落與核心題旨的勾連", "stem": "本次寫作主題為「時間與精力分配的選擇與放棄歷程」。下列哪一位同學在第二段的鋪排「嚴重偏離題旨」？", "options": ["A. 甲生：描寫自己如何在週末割捨了兩場籃球賽，換取四小時專注訂正自然錯題的掙扎心境。", "B. 乙生：詳細描寫線上遊戲的五個英雄角色技能設定、改版內容以及自己如何連夜打上宗師段位的操作過程。", "C. 丙生：描繪自己在課業衝刺與兼顧家人相處時，學會晚餐時間關閉手機專心陪伴父母的取捨體會。", "D. 丁生：回顧自己忍痛退出管樂團巡演，在琴房最後一次擦拭薩克斯風時的感傷與自覺。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。乙生沉溺於手遊技能與排位操作的細節，完全脫離了「時間與精力的分配、選擇與割捨的心路歷程」，屬於典型的「題材失控與偏離題旨」。甲、丙、丁均緊扣取捨的得失與心靈體會。"}, {"id": 24, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "突兀斷裂修補：救回「未完之句」", "stem": "在本次 910 班評閱中，有同學在第二段末寫出：「就像今天你選的是和朋友」便戛然而止交卷，導致結構嚴重殘缺。若要替該生「續接並修補」此句，使其成為結構完整的句子，下列何者銜接最流暢？", "options": ["A. 就像今天你選的是和朋友出去玩，但是你明天就會後悔，所以你還是不要去好了。", "B. 就像今天你選的是和朋友並肩漫步於向晚的球場，便意味著必須放下伏案疾書的安寧；任何看似微小的抉擇，背後都隱含著必須獨自承擔的代價。", "C. 就像今天你選的是和朋友，大家都覺得很開心，因為朋友是很重要的人，沒有朋友不行。", "D. 就像今天你選的是和朋友，那麼四個格子裡的社交就被你選中了，其他三個就被你放棄了。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 不僅補齊了缺漏的受詞（並肩漫步於向晚球場），更點出「選擇之後意味著放下讀書安寧」的對立代價，進而承接哲理說理，完美修復了語義斷裂並提升結構層次。"}, {"id": 25, "cat": "結構是否完整", "cat_name": "段落結構與起承轉合", "title": "段落勻稱：字數配比的合理規劃", "stem": "假設考場寫作目標為 700 字左右，下列哪一種四段式的字數分配最符合「結構勻稱、主體飽滿」的原則？", "options": ["A. 第一段 350 字，第二段 100 字，第三段 150 字，第四段 100 字", "B. 第一段 80 字，第二段 300 字，第三段 80 字，第四段 240 字", "C. 第一段 100～120 字，第二段 220～250 字，第三段 200～230 字，第四段 100～120 字", "D. 第一段 30 字，第二段 50 字，第三段 550 字，第四段 70 字"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。標準的「橄欖型/六角型」優質結構：開頭與結尾精練集中（各約佔 15%~18%），中間的承（事件敘事）與轉（思辨反思）構成主體（各佔 30%~35%），能確保故事有血有肉、論理深刻扎實。"}, {"id": 26, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "抽象 vs. 具體：事件聚焦能力的判斷", "stem": "許多學生寫作文時「只講空洞泛論，沒有具體事件」。下列哪一位學生的寫法真正落實了「單一焦點的具體事件描寫」？", "options": ["A. 國三以來我放棄了很多東西，比如跟朋友打球、跟家人出國、看電視、打電動，我通通都放棄了，每天都在讀書。", "B. 那個週六午後，張媽遞來全國學生美展的報名表，我看著置放角落剛調好的靛藍顏料，身後書包裡卻沉甸甸裝著下週一的模擬試卷；在夕陽斜照的畫室門口，我握著那張空白表格，指尖顫動了許久。", "C. 每個人在生活中都會遇到需要做決定的時候，決定得好就會很順利，決定得不好就會遇到很多挫折，所以我們要三思而後行。", "D. 我們班的同學都很用功，有人早上五點就起床讀書，有人晚上讀到一點，大家都為了會考在拚命努力。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 精確聚焦於「週六午後、畫室門口、美術報名表與模擬試卷」這一個具體場景中的抉擇時刻，具備時間、地點、物件與動作特寫。(A) 是流水帳清單；(C) 是空洞說教；(D) 是泛泛觀察，皆非「具體個人事件」。"}, {"id": 27, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "物件借代：用具體道具承載內在情感", "stem": "在寫作「放棄樂器/運動專長」時，如果能善用一個「具體物件」來承載心路歷程，文章會格外動人。下列哪一個物件的運用與情感烘托最成功？", "options": ["A. 我買了一支八千塊的長笛，聲音非常好聽，但是因為國三太忙了，所以我就把它放著不用了。", "B. 拭去長笛按鍵上積覆的薄塵，金屬的冷冽透入指心；我將它輕輕鎖入深黑的絨布盒內，像封存了一段斑斕的年少，也鎖上了一份對破曉重鳴的深沉約定。", "C. 我的長笛是爸爸買給我的生日禮物，我很喜歡它，但我現在必須要先去補習班補數學。", "D. 長笛是一種木管樂器，起源於歐洲，吹奏起來需要很好的肺活量，我以前練得很辛苦。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 透過「按鍵薄塵」、「金屬冷冽」、「深黑絨布盒」、「鎖上約定」，將樂器從單純的工具昇華為「青春夢想與暫時沉潛的象徵」。其他選項要麼炫耀價格、要麼語意平淡、要麼變成樂器維基百科介紹。"}, {"id": 28, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "場景還原：生活對話的去口語與精準化", "stem": "同學欲描寫「同儕邀約出遊，自己面臨抉擇時的對話」。下列哪一段對話既保留現場感，又具備文學質感？", "options": ["A. 他說：「走啦去玩啦！」我說：「不行啦我要讀書！」他說：「厚很難搞欸！」我說：「就真的不行嘛！」", "B. 「去不去？就差你一個，難得週末放鬆一下！」阿哲在球場邊揮著球棒大喊。夕陽將他的身影映得無比瀟灑，我捏緊了口袋裡剛被理化錯題劃花的筆記，低聲答道：「你們去吧……我想把這張卷子啃完。」", "C. 朋友問我要不要去打球，我心裡想去，嘴巴說不想去，大家就在那裡推來推去，浪費了很多時間。", "D. 我對朋友說：「子曰：學而時習之，不亦說乎？現在是我們讀書的時間，大家不可以隨便出去玩樂。」"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 結合語音語調、環境（夕陽球場）、肢體動作（揮球棒、捏緊筆記）與神態（低聲回答），極具現場張力。(A) 是完全未經文學提煉的白話口水；(C) 敘述平乏；(D) 假造古聖先賢口吻，顯得虛偽滑稽。"}, {"id": 29, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "事件真實性檢驗：辨識「假大空」情節", "stem": "考場張媽極度反感「胡編亂造的悲情或英雄事跡」。下列哪一個事件描寫「真實可信、深具同理心」，最符合九年級學生的實際生活？", "options": ["A. 國三為了讀書，我連續三天三夜完全不睡覺，最後吐血暈倒在考場上被救護車送走。", "B. 面對即將到來的全中運，我忍痛退隊；當我看著隊友在台上接過金牌時，我流下了悔恨的淚水，發誓再也不讀書了。", "C. 模擬考前夕，手機螢幕跳出好友群組正熱烈討論週末動漫展的訊息；我凝視著那不斷彈出的貼圖，猶豫再三，最終按下了「關閉通知」，將視線拉回密密麻麻的歷史年表。", "D. 因為決定要把所有精力放在課業上，我毅然決然跟全班所有同學絕交，上課不跟任何人說話。"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。(C) 「群組動漫展討論、貼圖彈出、關閉通知、拉回歷史年表」，是當代國中生無比真實的生活拉扯，細微卻共鳴強烈。(A) 連續三天不睡吐血屬荒誕造假；(B) 情緒走向極端叛逆；(D) 偏激幼稚，皆屬劣等選材。"}, {"id": 30, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "生活切片：以小見大的生活觀察", "stem": "以「微小物件」見出「國三生活重大取捨」，下列哪一個選材切入點最富文學意象（以小見大）？", "options": ["A. 家裡那台六十五吋的大電視機，自從開學以來就一直插著插頭，浪費了很多電。", "B. 書桌前那盆原本翠綠的多肉植物，因我數週伏案衝刺而疏於照料，葉片已悄悄泛黃枯萎；它無聲的凋落，像一記警鐘，提醒著我專注背後所遺漏的生命溫存。", "C. 媽媽買給我的一個新的鉛筆盒，裡面裝滿了各式各樣的文具，有紅筆、藍筆、立可帶。", "D. 學校的營養午餐每次都有我討厭的青椒，但我為了長高還是忍耐把它全部吃完了。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 以「疏於照料的多肉植物泛黃枯萎」作為微觀切片，象徵全心投入升學衝刺時對生活溫存的忽略，體現「有所得亦有所失」的深沉省思，以小見大。(A)、(C)、(D) 皆停留在表面物件或無關生活瑣事。"}, {"id": 31, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "事件展開的四要素：時、地、人、事", "stem": "寫作記敘事件時，必須具備清晰的時空座標與情境背景。下列文句中，哪一句完整具備了「明確時空背景、人物動作與衝突焦點」？", "options": ["A. 有一天在某個地方，我和一個朋友在那裡討論要做什麼事情，大家意見都不一樣。", "B. 某個悶熱的週五傍晚，在補習班泛著冷光的走廊拐角，班長遞來社團成果發表會的邀請函，而我手中正握著昨晚剛被理化導師滿江紅批示的重考卷。", "C. 很多人都覺得國三時間過得很快，一轉眼就已經過去了一大半，讓人感到措手不及。", "D. 在學校裡，張媽總是耳提面命地要我們好好讀書，不要讓父母失望，要爭取光榮。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。時間（悶熱的週五傍晚）、地點（補習班冷光走廊拐角）、人物（班長與我）、動作與衝突道具（社發邀請函 vs. 滿江紅理化重考卷），情境要素俱足，戲劇張力躍然紙上。(A) 模糊不清；(C)、(D) 屬泛論。"}, {"id": 32, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "動人特寫：由「全景」推向「特寫鏡頭」", "stem": "在描寫「深夜苦讀的疲憊與堅持」時，下列哪一段文字的運鏡方式是由「遠景（全景）自然推進至微觀特寫」？", "options": ["A. 整個城市早已沉入墨黑的寂靜，遠處街道唯餘昏黃的路燈在霧氣中閃爍。鏡頭拉近至我這方小小的窗櫺，書桌上的檯燈圈出一泓孤獨的光暈，鉛筆芯在草稿紙上反覆磨擦，筆尖微微顫抖，最終因力道過猛而「喀」一聲折斷。", "B. 我先喝了一口水，然後看了一下時鐘，再翻開英文單字本，背了十個單字之後，又去洗了把臉，回來繼續寫數學題。", "C. 讀書是一件很辛苦的事情，尤其是深夜讀書更辛苦，如果大家都能早點睡覺，那該有多好。", "D. 黑夜籠罩著大地，星星在天空中眨著眼睛，月亮在雲層裡穿梭，風兒在樹梢上跳舞，一切都那麼美麗。"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。(A) 展現了教科書級的電影運鏡：整座城市的寂靜街道（遠景） -> 窗櫺檯燈圈出的光暈（中景） -> 鉛筆芯在草稿紙摩擦與折斷的特寫（微觀特寫），層次分明。(B) 為機械流水帳；(C) 為空洞感嘆；(D) 為擬人套語。"}, {"id": 33, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "避免「事件中斷」：敘事的完整因果鏈條", "stem": "很多學生寫了一半的故事突然消失，例如：「我曾經想放棄打籃球，後來發生了一件事，我就決定放棄了。」這句話最大的問題在於？", "options": ["A. 語法錯誤，應該使用倒裝句。", "B. 刻意隱匿了最關鍵的「事件核心與轉折機制」，形同敘事斷崖，讓讀者完全無法理解動機。", "C. 句子寫得太長，應該拆成三個短句。", "D. 沒有引用名人打籃球的故事作為佐證。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。「後來發生了一件事」是寫作大忌，等於跳過了「發生什麼事？帶來什麼衝突？如何改變想法？」的核心心路歷程，讓文章如同被剪斷的膠卷，完全喪失敘事說服力。"}, {"id": 34, "cat": "具體事件說明", "cat_name": "具體事件與場景特寫", "title": "場景氛圍對比：以熱鬧反襯專注孤寂", "stem": "為了突顯自己在「同儕社交」與「課業衝刺」中的決然取捨，哪一種「場景對比」手法最具張力？", "options": ["A. 我在房間讀書，我弟弟在客廳看電視，電視聲音很大，我叫他小聲一點他都不聽。", "B. 走廊那端傳來同儕放學時歡騰的笑鬧與相約聚餐的喧嘩，聲浪隨風湧來；而我轉身走入空蕩的圖書館自習室，拉開木椅，在日光燈低微的嗡鳴中，將自己釘在一頁頁深奧的幾何定理裡。", "C. 大家都喜歡放假，沒有人喜歡上課，因為放假可以做自己想做的事情，上課只能坐在椅子上發呆。", "D. 晴天的操場總是很多人，雨天的操場就沒有人，這就像我們的生活一樣有晴有雨。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 以「走廊那端歡騰喧嘩（動、熱、群體）」對比「空蕩自習室的日光燈嗡鳴與幾何定理（靜、冷、個體）」，以動襯靜，深刻烘托出主動割捨熱鬧、甘於寂寞的專注意志。(A) 是家庭抱怨；(C)、(D) 語意渙散。"}, {"id": 35, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "因果跳躍診斷：找出邏輯斷層", "stem": "閱讀下列文句：「因為國三的課業非常繁重，所以我決定放棄所有的社交與娛樂，結果我在第二次模擬考就順利考上了建中。」這段話存在哪一項嚴重的「因果邏輯跳躍」？", "options": ["A. 放棄娛樂不一定會導致考上第一志願，且模擬考只是模擬測驗，不可能直接「考上」學校，時序與因果皆顛倒錯亂。", "B. 建中不是每個人都能考的學校，應該改成一般普通高中才合理。", "C. 國三的課業不應該用「繁重」來形容，用詞不當。", "D. 應該把「因為……所以……」改成「不但……而且……」句型。"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。這句話犯了雙重邏輯硬傷：第一，模擬考只是常模測驗，根本不可能直接「考上」高中；第二，把「放棄娛樂」直接等同於「必定考上第一志願」，忽略了讀書方法、效率、心態調整等關鍵中介變數，屬於典型的因果跳躍與過度吹噓。"}, {"id": 36, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "滑坡謬誤：避免極端推論", "stem": "學生寫道：「如果國三連一個週末都拿去打球，我的複習進度就會落後；進度一落後，模擬考就會考爛；模擬考一考爛，會考就徹底完蛋，這輩子就再也沒有希望了。」這種論證方式在寫作邏輯上被稱作什麼病態思維？", "options": ["A. 倒果為因（把結果當成原因）", "B. 滑坡謬誤（Slippery Slope，將單一可能無限放大推演為毀滅性災難）", "C. 循環論證（兜圈子重複同樣的話）", "D. 稻草人謬誤（曲解對方的論點來攻擊）"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。「滑坡謬誤」是將一次適度的休息（打球一個週末）無節制地連鎖推論為「進度落後->模考考爛->會考完蛋->人生絕望」，這種非黑即白的災難化思考，使文章失去理性客觀的說服力。"}, {"id": 37, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "合理權衡：如何論述「放棄」的代價與收穫", "stem": "在論述「選擇課業衝刺，放棄熱愛的手遊」時，下列哪一種論理方式最顯成熟且符合客觀常理？", "options": ["A. 手遊本來就是騙錢且毫無意義的精神鴉片，放棄它根本不需要任何猶豫，我現在非常痛恨手遊。", "B. 割捨虛擬世界的榮耀固然令人悵惘，但那些指尖刷出的排位終究如泡沫般虛浮；將這份專注轉注於現實的學業積累，雖歷經枯燥淘洗，換得的卻是踏實深厚的知識底氣。", "C. 只要我會考考完，我就要把所有刪掉的遊戲全部下載回來，三天三夜不睡覺把它們全部打通關。", "D. 張媽跟家長都說打遊戲的小孩會變壞，所以為了不讓大家覺得我是壞小孩，我只好放棄打遊戲。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 承認虛擬世界的吸引力與放棄的失落（不全盤妖魔化），同時以理性思辨點破「虛擬泡沫 vs. 現實底氣」的價值差異，因果推導合理成熟。(A) 走極端謾罵；(C) 暴露出延宕發洩的幼稚；(D) 為盲從他人評價。"}, {"id": 38, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "辨析「充分條件」與「必要條件」", "stem": "許多同學寫出：「只要我把每天的作息時間排滿，嚴格執行，我的成績就一定會突飛猛進。」這句話在邏輯上的謬誤為何？", "options": ["A. 時間排滿只是投入時間的『必要條件』之一，並不等於『充分條件』；若缺乏理解深度、吸收效率與適度休息，填鴨式的疲勞戰往往導致反效果。", "B. 作息時間排滿只適合高三生，國三生年紀太小不適合排滿時間。", "C. 成績突飛猛進一定要靠補習，自己排時間是沒有用的。", "D. 這句話邏輯完全正確，沒有任何瑕疵，值得全體同學效法。"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。時間排滿只是外在形式（必要條件），成績提升還涉及吸收效率、思維理解與精神狀態。混淆「充分條件（只要……就必定……）」會讓論述顯得天真盲目，缺乏對學習本質的洞察。"}, {"id": 39, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "自相矛盾檢查：段落前後立場一致性", "stem": "閱讀下列同一篇作文中的兩段話，指出其邏輯矛盾之處：\n【第二段】「為了專注於課業，我毅然退出所有社團，因為我覺得國三生根本沒有資格浪費時間在興趣上。」\n【第四段】「這一年我深刻體會到，健康的青春應該百花齊放，社團與興趣才是一個人靈魂的真正核心。」\n若中間缺乏轉折說明，這篇文章出現了什麼問題？", "options": ["A. 沒有問題，這代表作者思想非常多元豐富。", "B. 存在嚴重的「自相矛盾（自我打臉）」，前後價值觀衝突卻未交代心境轉變的合理契機，顯得信口開河。", "C. 第二段寫得太好，第四段寫得太差，文筆不對稱。", "D. 應該把社團改成運動，矛盾就會自然消失。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。文章若在前面全盤否定社團（毫無資格浪費時間），後面又毫無預警地將社團捧為靈魂核心，且中間沒有經歷「碰壁、反思、體悟」的合理心靈事件，會讓讀者覺得作者立場反覆、胡言亂語。"}, {"id": 40, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "辨析「常理動機」：拒絕失真的道德說教", "stem": "在描寫「為什麼要在國三這一年選擇奮鬥」時，下列哪一種論述動機最真誠、最符合常理，不顯得造作虛偽？", "options": ["A. 我之所以奮發圖強，是為了要報效國家，解決社會上的少子化與經濟危機問題。", "B. 我讀書是為了在將來打敗所有看不起我的人，讓他們跪在我面前向我道歉認錯。", "C. 國三的奮鬥並非為了向誰證明優越，而是在人生第一次自主掌舵時，探索自己能為夢想付出多大耐性與毅力；這份自律，是送給未來自己的一張入場券。", "D. 因為孔子說「學而不思則罔」，所以身為中華兒女的我們必須要把書讀好，才對得起列祖列宗。"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。(C) 將奮鬥動機回歸於「探索個人耐性、為未來自律掌舵」，誠懇踏實且具哲學美感。(A) 假大空；(B) 充滿戾氣與報復心態；(D) 道德綁架且言不由衷。"}, {"id": 41, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "合理解釋「失敗」：從挫折中提取養分", "stem": "當模考成績不如預期時，如何推導「後續行動與心態」最顯因果嚴謹？", "options": ["A. 成績不理想代表老天爺都在跟我作對，我決定以後考試都用猜的，反正努力也沒用。", "B. 一次排名的滑落並不宣告死刑，它只是一面誠實的鏡子，照出我複習地圖上的盲區；与其在懊惱中空轉，不如重拾紅筆逐題拆解失分脈絡，讓每一次跌倒都化為加固基石的契機。", "C. 一定是因為那天早餐店的老闆娘動作太慢害我遲到，影響了我考試的心情，不然我絕對可以考滿分。", "D. 我把成績單撕得粉碎，假裝這場考試從來沒有發生過，繼續依照原本的方式讀書。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 展現了理性的歸因風格：把失利視為「照出盲區的鏡子」，推導出「逐題拆解、加固基石」的具體行動，因果緊扣且積極正向。(A) 習得無助；(C) 怨天尤人；(D) 鴕鳥逃避。"}, {"id": 42, "cat": "是否合理因果", "cat_name": "邏輯因果與思辨合理性", "title": "避免「以偏概全」：同儕觀察的客觀度", "stem": "文章論及「同儕關係與社交」時，哪一個文句能避免「以偏概全」的偏激結論？", "options": ["A. 國三所有的朋友都是酒肉朋友，他們約你出去玩只是想拖垮你的成績，讓你考不上好學校。", "B. 朋友是一把雙刃劍：盲目的群聚嬉遊固然會消磨寶貴光陰，但志同道合的同儕在困頓時遞來的解題紙條與真摯勉勵，卻往往是支撐我們穿越暗夜的重要燈火。", "C. 只要交到壞朋友，一輩子就徹底毀了；只要交到好朋友，不用讀書也能跟著上建中。", "D. 國三根本不需要任何朋友，孤獨才是唯一成功的道路，朋友只會浪費你的時間。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 兼顧同儕社交的雙面性：點出盲目群聚的消耗，亦肯定真摯同儕在困頓中的扶持，論點客觀全面。(A)、(C)、(D) 皆陷入極端化、被害妄想或絕對化論調，思維嚴重偏激。"}, {"id": 43, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "轉折標誌：識別真正的「心靈蛻變」", "stem": "作文要拿到 5 級分以上，必須展現「前後心境的反差與成長」。下列哪一段文字最鮮明地勾勒出「從被動抗拒到主動承擔」的內在轉變？", "options": ["A. 以前我很喜歡看電視，現在我也很喜歡看電視，只是看的時間稍微變少了一點點。", "B. 起初，這份割捨是被父母與考程強加的枷鎖，每一次關上房門，心中都翻湧著不甘與怨懟；然而，當我學會在靜謐的自習桌前與自己對話，我漸漸明白——這不是外在力量的剝奪，而是我為自己的未來，鄭重簽署的第一份獨立契約。", "C. 反正張媽說要讀書我就讀書，張媽說要考試我就考試，習慣了之後也就沒有什麼感覺了。", "D. 以前我成績很差，後來去補習之後成績變好了，爸爸媽媽很高興，買了一台新腳踏車送給我。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 明確呈現了心理軌跡：最初將割捨視為「強加的枷鎖與怨懟（Before）」 -> 經過靜謐對話，轉變為「為未來鄭重簽署的獨立契約（After）」，心靈境界徹底昇華。(A) 毫無變化；(C) 是麻木妥協；(D) 是物質獎勵的流水帳。"}, {"id": 44, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "前後對照表述：善用對比句型", "stem": "欲展現國三一年來自己在「時間認知」上的成熟蛻變，下列哪一個對稱排比句最富哲思美感？", "options": ["A. 過去，我總以為時間是一條可以揮霍的長河，任由青春的舟楫漫無目的地漂流；如今，我懂得時間是一把需精雕細琢的刻刀，唯有專注落筆，方能在歲月的頑石上鑿出夢想的輪廓。", "B. 以前我不知道時間是什麼，現在我知道時間就是金錢，一寸光陰一寸金，寸金難買寸光陰。", "C. 國二的時候我覺得時間過得很慢，常常在課堂上發呆；國三的時候我覺得時間過得很快，每天都在趕進度。", "D. 昨天已經過去了，明天還沒有來，只有今天才是最重要的，所以我們要把握今天。"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。(A) 「揮霍長河 vs. 精雕刻刀」、「漫無目的漂流 vs. 鑿出夢想輪廓」，意象呼應對稱，深刻表現出對生命時間由任性到自律的崇高體悟。(B) 搬用俗套諺語；(C) 是表象感嘆；(D) 是陳腔濫調。"}, {"id": 45, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "破除「原地打轉」：揪出偽成長段落", "stem": "下列哪一段文字表面上看似寫了心境轉折，實際上卻「原地打轉，根本沒有思想成長」？", "options": ["A. 從一開始對模擬考分數的歇斯底里，到如今能平靜地審視錯題、拆解缺失，我發現自己學會了與焦慮和平共處。", "B. 雖然我一開始覺得讀書很痛苦，每天都想放棄；但到了現在，我依然覺得讀書非常痛苦，每天還是很想放棄，只是不得不硬撐著。", "C. 曾經以為割捨同儕聚會是失去全世界，走過這段長路才發現，真正的友誼經得起沉澱，各自奔馳的我們終將在山頂重逢。", "D. 過去的浮躁在墨香浸潤中褪去，我不再渴求每張卡片都填滿，而是學會在一方留白中安頓靈魂。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 前面寫「覺得讀書痛苦想放棄」，後面寫「依然覺得痛苦想放棄，不得不硬撐」，心境完全停留在初始的被動怨懟，毫無反思、開拓或心理成長。(A)、(C)、(D) 均具備清晰深刻的心智蛻變。"}, {"id": 46, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "轉折觸媒：為改變安排合理的契機", "stem": "文章由「盲目焦慮」走向「坦然自持」，需要一個具有說服力的「觸媒事件（轉折點）」。下列哪一個轉折契機最自然動人？", "options": ["A. 某天晚上我夢到了文昌帝君，祂摸了摸我的頭說我一定會考上，醒來之後我就豁然開朗了。", "B. 狂躁焦慮的深夜，我推開窗，看見對棟大樓唯餘零星幾盞溫黃燈火。在寒風中，一位夜歸的清潔員正默然掃去滿街落葉；那一刻我驟然警醒——每個人都在夜色中靜默負重，我的這點挫折又有何矯情？心頭的狂瀾在落葉沙沙聲中化為澄澈的平靜。", "C. 隔壁班同學借給我看了一本心靈雞湯的書，我隨便翻了兩頁，立刻就明白了人生的所有大道理。", "D. 突然之間我就想通了，沒有任何原因，人總是要長大的嘛！"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 透過「深夜寒風中的落葉清潔員」作為視覺與心靈的觸媒，由他人的負重反觀自我的矯情，心境的轉折深刻而自然。(A) 迷信荒誕；(C) 廉價雞湯；(D) 突兀兒戲，皆屬低劣筆法。"}, {"id": 47, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "眼神與姿態的前後對比", "stem": "欲透過「外在姿態與神情」的前後反差，表現主角從「茫然畏縮」到「堅定自信」的成長，下列哪一組描寫最精準？", "options": ["A. 以前我長得很矮，現在我長高了五公分；以前我很瘦，現在我變壯了一點點。", "B. 曾幾何時，走廊穿衣鏡裡的少年眉頭深鎖、雙肩微縮，眼神閃爍著對未知的惶惑；如今，迎著清晨第一抹破曉曦光，鏡中的自己背脊筆挺，目光澄澈如炬，縱使前路荊棘叢生，亦無畏於邁出堅毅的步履。", "C. 以前我常常穿拖鞋去上學，現在我都穿運動鞋，因為穿運動鞋跑得比較快。", "D. 以前我看到張媽都不敢打招呼，現在我看到張媽都會大聲說張媽好，張媽都誇我有禮貌。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 藉由「眉頭深鎖、雙肩微縮、目光惶惑」對比「背脊筆挺、目光澄澈如炬」，透過體態神情的外顯變化，鮮明映射出內在精神骨骼的挺拔。(A) 是生理發育；(C) 瑣碎無關；(D) 停留在日常禮貌層面。"}, {"id": 48, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "對「孤獨」認知的層次提升", "stem": "在寫作「放棄社交、專注課業」的孤獨歷程中，下列哪一種感悟展現了對「孤獨」最高層次的昇華？", "options": ["A. 孤獨真的太痛苦了，每天一個人在書桌前就像坐牢一樣，我這輩子再也不想體驗這種孤獨了。", "B. 我發現孤獨可以讓我省下很多零用錢，因為不用跟朋友出去吃大餐買飲料，銀行存款增加了很多。", "C. 原來，孤獨不是被人群遺忘的荒原，而是靈魂深處最靜謐的修煉場；在遠離喧鬧的自我凝視中，我褪去了盲從的浮沫，聽見了理想拔節抽芽的微弱脆響。", "D. 只要戴上耳機聽流行音樂，孤獨就不會來找你，所以我每天讀書都戴著耳機聽音樂。"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。(C) 將孤獨由「荒原」昇華為「靈魂修煉場」，在寂靜中「褪去盲從、聽見理想抽芽」，思維境界高超，語言兼具詩意與哲理深度。(A) 停留在抱怨；(B) 庸俗功利；(D) 逃避現實。"}, {"id": 49, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "面對「失去」的豁達感悟", "stem": "文章回顧九年級所割捨下的愛好或休閒，末段若要表現「不悔且豁達」的成熟胸襟，下列哪一句最為恰切？", "options": ["A. 那些被我放棄的時間和興趣，就像潑出去的水一樣收不回來了，後悔也沒有用，只能認命。", "B. 歲月從不辜負每一場有意識的成全。我雖放下了窗外那片斑斕的落英，卻在靜默的根系中，悄然蓄滿了迎向繁花盛開的春汛。", "C. 大家都說有失必有得，雖然我失去了很多玩的機會，但我得到了一大堆寫不完的考卷。", "D. 早知道國三這麼痛苦，我國一國二就應該玩得更兇一點，才不會現在覺得虧大了。"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。(B) 善用植物繁衍的隱喻：「放下落英，蓄滿根系以候春汛」，把「割捨」轉化為「沉潛蓄力」，展現大氣豁達的生命哲思。(A) 認命消極；(C) 諷刺抱怨；(D) 悔不當初，皆屬不成熟的心態表述。"}, {"id": 50, "cat": "是否呈現前後改變", "cat_name": "心境轉折與前後對照", "title": "終極試煉：會考寫作滿分心法總檢閱", "stem": "綜合 904、905、910 三班閱卷經驗，若要在本次「時間與精力分配的抉擇」寫作測驗中斬獲【6級分（滿分）】，下列哪一個條件組合是缺一不可的核心要素？", "options": ["A. 全文必須至少引用十個歷史人物故事，且字數要寫超過一千五百字。", "B. 必須保證每段都使用倒裝句與誇飾法，且絕對不能提到「國三」或「考試」等字眼。", "C. 緊扣核心題旨，以具體生動的生活事件為骨架，融合細膩感官摹寫與真實內心拉扯；具備嚴密起承轉合結構，並在得失取捨中展現深邃客觀的思辨與動人的心靈蛻變。", "D. 必須極力渲染國三生活的悲慘與痛苦，越能把張媽哭得一把鼻涕一把眼淚，分數就越高。"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。(C) 囊括了會考國文寫作規準的六大核心柱石：①切題立意深遠、②具體事件真摯、③感官摹寫生動、④結構勻稱嚴謹、⑤思辨因果周延、⑥心境蛻變深刻。這正是本次 50 題互動實戰練習的核心修煉目標！"}, {"id": 51, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論點辨識：區分客觀事實與作者中心論點", "stem": "議論文的核心在於「提出明確的主張與見解」。下列文句，何者屬於作者的「論點」，而非單純的客觀事實？", "options": ["A. 國中教育會考於每年五月中下旬舉行，寫作測驗測驗時間為五十分鐘", "B. 根據調查，國三學生每日平均用於課後複習與作業的時間約為三至四小時", "C. 盲目填滿時間並非勤奮，懂得適度留白才能讓心靈保有彈性，迎向深度學習", "D. 本次寫作測驗試題提供了課業、社團、社交、休息四種精力分配選項"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n論點是作者對某個議題或現象所持的主觀主張、見解與價值判斷。(C)「盲目填滿非勤奮，留白方能深度學習」為作者對時間管理提出的核心主張，屬於論點。\n(A) 為升學制度的客觀事實；\n(B) 為問卷調查的客觀統計數據；\n(D) 為測驗題卷形式的客觀描述，三者皆為客觀事實或論據素材，而非論點。"}, {"id": 52, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論點架構：中心論點與分論點之呼應", "stem": "某生撰寫議論文，中心論點為「懂得取捨，是國三邁向成熟的必修課」。下列何者「最不適合」作為支撐此中心論點的分論點？", "options": ["A. 割捨次要欲望，方能專注於核心學習目標", "B. 拒絕盲從社交，方能在安靜獨處中凝鍊心志", "C. 模擬考試題型多變，應當購買更多參考書大量刷題", "D. 放下既有執念，方能在得失之間體會生命的寬度"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n中心論點統攝全篇，各分論點必須緊扣中心論點展開論述。本文中心論點為「懂得取捨是成熟的必修課」，(A)、(B)、(D) 分別從「目標取捨」、「社交取捨」、「心態放下」切入，緊扣主旨。\n(C) 僅討論「刷題技巧與購買參考書」，屬於枝微末節的考試技術，脫離了「取捨與成熟」的哲理範疇，無法支撐中心論點。"}, {"id": 53, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論據分類：事實論據與理論論據之判定", "stem": "議論文的論據可分為「事實論據」（事例、史實、統計數據）與「理論論據」（名人名言、科學公理、格言諺語）。下列何者屬於【理論論據】？", "options": ["A. 司馬遷身受宮刑之奇恥大辱，發憤著述，完成被譽為「史家之絕唱」的《史記》", "B. 曾國藩家書言：「凡事皆有極困難之時，打得通的便是好漢，打不通的便是懦夫。」", "C. 居禮夫人歷經成千上萬次實驗失敗，終在成噸的瀝青礦渣中提煉出純鐳", "D. 班長在段考前主動交出智慧型手機，最終成績自班排二十躍升至班級前三名"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n(B) 引用曾國藩家書的名人名言作為說理依據，屬於被社會大眾公認或經時間檢驗的權威真理，為標準的【理論論據（道理論據）】。\n(A) 司馬遷著史、(C) 居禮夫人提煉鐳、(D) 班長交出手機躍升成績，皆為真實發生過的人事經歷，屬於【事實論據】。"}, {"id": 54, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論據適切性：論據與論點之精準契合", "stem": "若欲論證「身處逆境挫折時堅守初心，方能將苦難淬鍊為生命的養分」，下列哪一個事例最為適切？", "options": ["A. 蘇軾因烏臺詩案被貶黃州，在政治絕境中耕讀赤壁，將苦難淬鍊為豁達磅礴的千古詞賦", "B. 秦始皇一統六國後，修築萬里長城並統一車軌文字度量衡，展現千秋帝王之雄圖", "C. 沈括博學多聞，精研天文地質與律曆醫學，著有被譽為科學里程碑的《夢溪筆談》", "D. 陶淵明不願為五斗米折腰，辭去彭澤縣令，隱居南山採菊自得，安貧樂道"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n題幹論點強調三個核心要素：「身處逆境」＋「堅守初心」＋「將苦難化為生命養分」。(A) 蘇軾遭受誣陷貶謫黃州（逆境），卻以文學創作昇華困厄（化苦難為養分），最為切題。\n(B) 強調開創帝王功業；\n(C) 側重於博學與科學研究；\n(D) 強調不同流合污的隱逸風骨，皆無法緊扣「將苦難淬鍊為生命養分」的論點。"}, {"id": 55, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論證方法：舉例論證（例證法）之特點", "stem": "閱讀下列文段：「古今成大事業者，莫不在孤寂中耐得住漫長的沉潛。越王勾踐臥薪嘗膽十載，終能三千越甲吞吳；曹雪芹於西山批閱十載、增刪五次，乃字字啼血而成《紅樓夢》。」這段文字主要運用的論證方法為何？", "options": ["A. 舉例論證（例證法）", "B. 比喻論證（喻證法）", "C. 類比論證（類推法）", "D. 歸謬反駁（歸謬法）"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n舉例論證（例證法）是列舉具有代表性、確鑿充分的具體事例來證明論點。文中先提出「成大事業者莫不在孤寂中耐得住沉潛」的論點，隨後列舉越王勾踐臥薪嘗膽與曹雪芹批閱增刪《紅樓夢》兩則具體歷史事例加以證明，屬於典型的【舉例論證】。"}, {"id": 56, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論證方法：引用論證（引證法）之功能", "stem": "作者在論述「專注與心無旁騖之重要」時，引用《莊子》「痀僂者承蜩」的古訓：「雖天地之大，萬物之多，而唯蜩翼之知。」作者引用此典故的主要用意為何？", "options": ["A. 介紹古代捕蟬技巧，展現先民之勞動智慧", "B. 藉經典權威言論，論證「心神專注達到極致，萬物皆難擾其志」之旨", "C. 批評現代人遠離自然，呼籲應多進行生態考察", "D. 展現個人的古籍閱讀量，豐富文章之古典詞藻"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n引用論證（引證法）旨在藉由權威典故或名人語錄來增強論點的說服力。《莊子》以此典故說明駝背老人專心捕蟬時，眼中只有蟬翼，連廣大天地萬物都無法動搖其心思，(B) 精準指出作者借此論證「專注致極」的論旨。\n(A)、(C) 望文生義；(D) 炫耀詞藻非引用論證的本質目的。"}, {"id": 57, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論證方法：對比論證（正反對照）之邏輯", "stem": "下列文句，何者運用了「對比論證（正反對比法）」來強化論點？", "options": ["A. 操場上的夕陽正緩緩西沉，餘暉將看台的影子拉得很長，遠處哨音嘹亮如笛", "B. 寬厚容人者，如百川納海，行路愈行愈廣；褊狹好爭者，似涸轍之鮒，寸步之間盡顯逼仄困頓", "C. 讀書就像農夫耕作，春天不播下一粒種子，秋天就別想奢望有一斗稻穀的收穫", "D. 這次段考我們班的平均成績比隔壁班高出三分，可見平時的小考測驗極具成效"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n對比論證是將兩種相反、相對的事物，或是同一事物在不同面向、不同觀點進行對照比較，以突顯是非曲直。(B) 將「寬厚容人（行路寬廣）」與「褊狹好爭（寸步逼仄）」兩種相反態度並列比較，屬於標準的【對比論證】。\n(A) 為寫景；(C) 為比喻論證；(D) 為日常推論。"}, {"id": 58, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論證方法：比喻論證（喻證法）之判斷", "stem": "文段：「思想若無自律的堤防約束，便會化為泛濫成災的洪水；唯有讓意志築起堅實的溝渠，生命的清泉方能奔流入海、潤澤四方。」這段文字主要運用的論證方法為何？", "options": ["A. 比喻論證（喻證法）", "B. 舉例論證（例證法）", "C. 引用論證（引證法）", "D. 歸納論證（歸納法）"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n比喻論證（喻證法）是以大眾熟知、具體生動的事物作比喻，藉以闡發抽象深奧的哲理。文中以「自律如堤防、無約束如洪水、意志如溝渠、生命如清泉」形象化論證自律對思想的規範作用，屬於標準的【比喻論證】。"}, {"id": 59, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "論證方法：類比論證之邏輯推衍", "stem": "下列文句，何者屬於「類比論證」（由兩類同性質事物在某些屬性上的相同，推導出在其他屬性上也具有相似規律）？", "options": ["A. 鍛造一把絕世寶劍需要歷經千錘百鍊與烈火淬火，培育一個心智堅韌的青年，又豈能缺少挫折艱難的磨礪？", "B. 許多醫學研究指出，維持充足睡眠的考生，其記憶鞏固效率比長期熬夜者高出兩成以上", "C. 孔子曾嘆：「逝者如斯夫，不舍晝夜！」時間如流水般飛逝，吾輩應當自強不息", "D. 只要我們平時上課專心聽講，回家按時完成作業，會考就一定能順利考取第一志願"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n類比論證是將本質性質相似的兩件事物進行對推。(A) 將「鍛造寶劍需要千錘百鍊」類推至「培育堅韌青年需要挫折磨礪」，兩者皆具備「在煎熬考驗中淬鍊成器」的共同屬性，屬於典型的【類比論證】。\n(B) 為數據事實論據；(C) 為引用論證；(D) 為因果推論。"}, {"id": 60, "cat": "論述論據論證", "cat_name": "論述·論據·論證教學與判斷", "title": "駁論思維：歸謬法之推演技巧", "stem": "議論文中，「歸謬法」是先假定對方的荒謬論點成立，再依其邏輯推演出極端荒謬的結論，從而有力反駁對方。下列何者運用了「歸謬法」？", "options": ["A. 對方主張「國三只要讀書考試就好，道德品格根本無關緊要」。若照此邏輯，考上第一志願卻自私自利、目無法紀的人，難道就是我們教育追求的終極成功？", "B. 我不同意你的觀點，因為根據教育基本法之規範，德智體群美五育並重才是中學教育之核心", "C. 大家都知道不讀書的人在未來競爭中難以立足，因此你所主張的「讀書無用論」顯然不能成立", "D. 古人云：「學而不思則罔，思而不學則殆。」可見學習與思考缺一不可，不可偏廢"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n歸謬法的關鍵在於「請君入甕」：(A) 先順著對方的荒唐前提（只要讀書其他品格皆無關緊要），推導出顯然荒謬的極端結論——「難道培養出目無法紀的自私之徒就是成功？」，令對方的論點不攻自破。\n(B) 屬依據法規直接駁斥；(C) 屬直接宣稱否定；(D) 屬正面立論引用。"}, {"id": 61, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：連接詞搭配不當與關係錯置", "stem": "下列文句中的連接詞，何者使用「完全正確」，沒有語病？", "options": ["A. 他雖然平日複習非常刻苦，然而在模擬考中取得了第一名的優異成績", "B. 這道幾何題目不僅難度極高，而且他僅花了五分鐘就順利解了出來", "C. 只要我們平時打牢扎實的語文基礎，才能在考場上面對多變的題型時從容不迫", "D. 即使面對重重挫折與壓力，他依然堅守對文學創作的初心，未曾動搖"], "answer": 3, "analysis": "【張媽叮嚀】選 (D)。\n(D)「即使……依然……」為表示假設讓步關係的正確關聯詞搭配。\n(A)「刻苦」與「得第一」為因果關係，誤用表示轉折的「雖然……然而……」，應改為「因為……所以……」；\n(B)「題目極難」與「五分鐘解出」為轉折關係，誤用表示遞進的「不僅……而且……」，應改為「儘管……但是……」；\n(C)「只要」表示充分條件，應與「就」搭配；若保留「才能」，前項應改為「只有……才……」。"}, {"id": 62, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：條件與假設關聯詞混淆", "stem": "「只有徹底戒除拖延的壞習慣，你就能真正掌握生活的主動權。」關於這句話的修改，下列何者最恰當？", "options": ["A. 將「只有」改為「只要」，或將「就能」改為「才能」", "B. 刪除「只有」，保留「就能」", "C. 將「就能」改為「反而」", "D. 將「只有」改為「因為」，「就能」改為「所以」"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n漢語關聯詞中，「只有……才……」表必要條件（唯有此條件才能達成結果）；「只要……就……」表充分條件（具備此條件即能達到結果）。原句混用「只有……就能……」，修改方式為：改為「只要……就能……」或「只有……才能……」。"}, {"id": 63, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：不合邏輯之強加因果", "stem": "下列文句，何者犯了「強加因果關係」的邏輯語病？", "options": ["A. 因為清晨下了一場暴雨，導致原本預定的戶外體育課改至室內球場進行", "B. 因為小明今天穿了一雙白色新球鞋，所以他在國文段考中考了一百分", "C. 由於長期伏案姿勢不良，他的頸椎在國三初期出現了輕微壓迫症狀", "D. 既然大家已經一致表決通過此項提案，我們就應當通力合作貫徹到底"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n穿白色球鞋與段考得滿分之間，並無任何因果關聯，硬套「因為……所以……」屬於典型的「強加因果」語病。(A)、(C) 具備物理或生理上的直接因果；(D) 為推論因果句，皆合理合情。"}, {"id": 64, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：複句關聯詞擺放位置失當", "stem": "複句中「前後分句主語相同時，關聯詞放在主語後；主語不同時，關聯詞放在主語前」。據此檢驗，下列哪一句關聯詞位置擺放【不恰當】？", "options": ["A. 雖然小華生病發燒，但是全班同學的關心讓他感到格外溫暖", "B. 不管天氣多麼惡劣，他都堅持每天清晨六點出門跑步", "C. 他不但字跡工整娟秀，而且作文立意也深刻高遠", "D. 不僅小明擅長數學解題，而且小明在英文朗讀比賽中也榮獲冠軍"], "answer": 3, "analysis": "【張媽叮嚀】選 (D)。\n(D) 前後兩個分句陳述的主體皆為「小明」（主語相同），關聯詞「不僅」應置於主語「小明」之後，改成：「小明不僅擅長數學解題，而且在英文朗讀比賽中也榮獲冠軍。」若放於主語前，讀者會誤以為後半句要轉接其他同學。"}, {"id": 65, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：介詞結構掩蓋主語（缺主語）", "stem": "「經過這次模擬考的嚴格洗禮，使全班同學更加認清了自己的實力差距。」這句話最主要的語病為何？", "options": ["A. 贅詞過多，語意重複", "B. 介詞結構「經過……」與「使……」連用，導致全句缺少主語", "C. 倒裝失當，時態顛倒", "D. 動詞與受詞搭配不當"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n這是會考病句的經典陷阱！「經過……」構成介詞片語充當狀語，「使……」又將全班同學變成了受詞，造成全句找不到發出動作的主詞。修改方式：刪除「經過」讓「這次模擬考」做主詞，或刪除「使」讓「全班同學」做主詞。"}, {"id": 66, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：謂語動詞缺乏受詞中心語", "stem": "「學校開展這一系列國三寫作思維特訓，目的在於培養同學們發現問題、分析問題以及解決問題。」此句缺少了哪一個必要成分？", "options": ["A. 缺少主語", "B. 缺少修飾語（定語）", "C. 缺乏賓語（受詞）中心語，應在句末補上「的能力」", "D. 缺少關聯詞"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n動詞「培養」後面必須搭配受詞中心名詞。「發現問題、分析問題以及解決問題」皆為動賓片語，在此充當定語，句末缺少了受詞中心語「的能力」，導致全句語意未完，應改為：「培養同學們……的能力」。"}, {"id": 67, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：偷換主語（中途易轍）", "stem": "「這篇描寫國三取捨心境的優秀作文，字句洗練真摯，讀完之後深受感動。」這句話的語法瑕疵在於下列何者？", "options": ["A. 暗中更換主語。前半句主語是「作文」，後半句卻暗中換成了讀者，缺乏主語銜接", "B. 褒義詞誤用為貶義詞", "C. 動詞重複出現，句型繁雜", "D. 句子過長，修辭不當"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n前半句的主語是「這篇優秀作文」，若直接接「讀完之後深受感動」，在語法上會變成「作文自己讀完自己深受感動」，屬於典型的「偷換主語/中途易轍」。正確修改應補出後半句主語，如：「……字句洗練真摯，令讀者讀完之後深受感動。」"}, {"id": 68, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "病句辨析：文句成分殘缺之判定", "stem": "下列文句，何者犯了「謂語動詞殘缺」的語病？", "options": ["A. 全校師生在禮堂聽取了專家關於考前心理調適的專題講座", "B. 我們必須發揚不怕困難、敢於挑戰自我、勇往直前的精神", "C. 面對激烈的升學競爭，我們必須認真嚴肅的態度對待每一次測驗", "D. 晨曦的微光穿透教室的窗櫺，照亮了課桌上堆疊的厚重講義"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n(C)「我們必須認真嚴肅的態度對待……」中，介詞或動詞殘缺，導致「必須」後面直接接名詞「態度」，語法不通。應改為：「我們必須『以』認真嚴肅的態度對待……」或「我們必須『抱持著』認真嚴肅的態度……」。"}, {"id": 69, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "詞語運用：成語望文生義之辨析", "stem": "下列文句「　」中的成語，何者使用【完全正確】？", "options": ["A. 這次作文段考全班平均退步了兩分，成績真是令人「差強人意」", "B. 在這次拔河比賽中，我們班一開局就「首當其衝」，勇奪全年級第一名", "C. 面對張媽拋出的寫作思維陷阱題，他神態自若，「侃侃而談」，分析得條理分明", "D. 學校運動會上，體育班同學跑得飛快，跑得慢的同學只能「望其項背」，完全追趕不上"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n(C)「侃侃而談」形容人理直氣壯、從容不迫地談話，使用正確。\n(A)「差強人意」指大體上還算能讓人滿意，不可誤用為表現極差；\n(B)「首當其衝」比喻最先遭受災禍或衝擊，非指跑第一或奪冠軍；\n(D)「望其項背」指能望見別人的頸部與背脊，比喻趕得上（常與否定詞連用「不能望其項背」），不可直接寫「只能望其項背」表示追不上。"}, {"id": 70, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "文句簡練：辨識語意重複之贅詞", "stem": "下列文句，何者文意簡練通暢，【沒有】贅詞重複的毛病？", "options": ["A. 他那粗淺而幼稚的推論，若拿到正式學術辯論場上，定會令人貽笑大方", "B. 父母對孩子若是過度溺愛，往往容易讓孩子失去獨立自主的健全人格", "C. 兩位選手在體能與臨場戰術上的差距懸殊很大，勝負在開賽之初便已見分曉", "D. 唯有在靜默自省中沉澱心靈，我們才能看清繁複雜音背後的本質真相"], "answer": 3, "analysis": "【張媽叮嚀】選 (D)。\n(D) 語意精練暢達無贅詞。\n(A)「貽笑大方」本身即包含「被內行人恥笑」，前面加「令人」成「令人被恥笑」，語意重複；\n(B)「溺愛」本身就是過度寵愛，前方再加上「過度」純屬疊床架屋；\n(C)「懸殊」本身就是相差很大，不可再接「很大」。"}, {"id": 71, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "語法搭配：動詞與受詞搭配之精確性", "stem": "下列文句中的動詞與受詞，何者搭配最為精準通順？", "options": ["A. 透過這次寫作練習，不僅增加了同學們的閱讀視野，更豐富了寫作技巧", "B. 導師在晨會上嚴厲批評並糾正了部分同學遲到早退的不良陋習", "C. 為了提高學生的身體素質，學校決定每天下午增加四十分鐘的體育鍛鍊", "D. 這場音樂會熱烈歡迎了全體師生的光臨參與，現場氣氛無比歡騰融洽"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n(C)「提高素質」、「增加鍛鍊」動賓搭配完全正確。\n(A)「增加」不能搭配「視野」（應為「拓寬視野」），「豐富」不能搭配「技巧」（應為「提升技巧」）；\n(B)「批評陋習」搭配不妥（應為「批評不良行為，糾正陋習」）；\n(D)「音樂會」為無生命之活動，不可作為主詞主動「熱烈歡迎光臨」。"}, {"id": 72, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "詞義色彩：褒貶感情色彩與謙敬詞", "stem": "下列文句「　」中的詞語，何者在「感情色彩（褒貶）或謙敬用語」上使用正確？", "options": ["A. 為了在段考中奪取高分，他可謂是「處心積慮」，每天制定嚴密的複習計畫", "B. 今天能有幸邀請到張教授蒞臨演講，真是令敝校「蓬蓽生輝」，萬分榮幸", "C. 他在演講台上發表了高明的見解，這番「拙見」贏得了全場觀眾熱烈的掌聲", "D. 只要大家「各持己見、互不相讓」，我們班的團結合作精神就一定能發揚光大"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n(B)「敝校」為謙稱，「蓬蓽生輝」感謝貴賓到訪使簡陋之處增光，謙敬完全得體。\n(A)「處心積慮」是貶義詞（費盡心機做壞事），不可用於稱讚同學刻苦讀書；\n(C)「拙見」是稱呼自己見解的謙詞，不可用來讚美他人；\n(D)「各持己見、互不相讓」是貶義消極詞，與「團結合作」前後矛盾。"}, {"id": 73, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "邏輯思維：前後自相矛盾之判斷", "stem": "下列文句，何者犯了「前後自相矛盾」的邏輯語病？", "options": ["A. 距離國三教育會考大約還有將近一百天左右的時間", "B. 窗外雷聲滾滾，不一會兒豆大的雨點便傾瀉在燥熱的街道上", "C. 儘管前方的道路充滿荊棘，他依然懷抱著堅定不移的理想邁步前行", "D. 操場上集合了九年級全體師生，安靜聆聽校長發表的勉勵致詞"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n(A) 同時出現「大約」、「將近」、「左右」三個表示概數的詞。「大約/左右」表示上下浮動，「將近」表示未達到且接近，三者混用造成嚴重的自相矛盾，應刪去「大約」與「左右」，保留「將近一百天」即可。"}, {"id": 74, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "邏輯思維：多重否定不當導致文意顛倒", "stem": "「為了防止類似的校園運動傷害意外不再發生，學務處全面檢修了全校體育器材。」這句話最大的問題為何？", "options": ["A. 「防止」與「不再」雙重否定，導致整句話意思變成了「希望傷害事故再次發生」", "B. 缺少主語", "C. 動詞與受詞搭配不當", "D. 語氣過於強硬，缺乏修辭美感"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n「防止」、「避免」、「杜絕」、「預防」等動詞本身就含有「不要讓某事發生」的否定意義。後面若再接「不再發生」，雙重否定成肯定，在邏輯上反而變成了「希望傷害事故繼續發生」！修改方式：刪除「不」字，改為「為了防止類似意外再次發生……」。"}, {"id": 75, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "邏輯思維：兩面對一面（雙提單應）之失衡", "stem": "「一個學生能否在國三會考中脫穎而出，關鍵在於他平時擁有良好的自律習慣與踏實的複習心態。」這句話屬於何種典型邏輯失衡？", "options": ["A. 一面對兩面，缺乏照應", "B. 兩面對一面（雙提單應）：前半句「能否」包含兩面，後半句卻只有正面對應", "C. 因果倒置，時序錯亂", "D. 主謂倒裝，修辭不當"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n前半句提出「能否」（包含「能」與「不能」兩面情況），後半句卻只回答了「擁有自律（正面的一面）」，使得邏輯天平失衡。修改方法：刪除前半句的「能否」，改為「一個學生要在國三會考中脫穎而出，關鍵在於……」；或後半句改為「關鍵在於他是否能擁有……」。"}, {"id": 76, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "邏輯思維：大小概念（種屬關係）不當並列", "stem": "下列文句，何者犯了「大小概念（種屬關係）不當並列」的邏輯錯誤？", "options": ["A. 校園圖書館新採購了大量文學著作、科普讀物、人物傳記以及圖書資料", "B. 書桌上整齊排列著鉛筆、原子筆、螢光筆以及立可帶等文具用品", "C. 國三複習內容涵蓋了國文、英文、數學、自然與社會等五大核心學科", "D. 運動會的比賽項目分為田賽與徑賽兩大類別，同學們皆踴躍報名參賽"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n(A) 中「文學著作、科普讀物、人物傳記」皆包含於「圖書資料」之中。將母概念（圖書資料）與子概念（小說傳記）用「以及」並列在一起，屬於「種屬概念混淆並列」，應改為：「……採購了大量文學著作、科普讀物以及人物傳記等圖書資料。」"}, {"id": 77, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "標點符號：頓號之規範用法", "stem": "根據教育部《重訂標點符號手冊》，下列文句中的「頓號（、）」，何者使用【完全正確】？", "options": ["A. 國三生面臨的挑戰包括課業壓力、和同儕競爭、以及家長期望", "B. 這座公園的景致優美，有參天古木、奇岩怪石、以及清澈見底的溪流", "C. 教室後方黑板上寫滿了國文、英文、數學、理化等各科每日作業清單", "D. 我今天買了蘋果、香蕉、和橘子三種新鮮水果"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n(C)「國文、英文、數學、理化」為單純名詞並列，頓號使用規範標準。\n(A)、(B)、(D) 犯了同一常見錯誤：在並列詞語中，如果已經使用了「和、及、以及、與」等連接詞，連接詞前面【不可再加頓號】！"}, {"id": 78, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "標點符號：陳述語氣誤用問號", "stem": "下列文句中的「問號（？）」，何者使用【錯誤】？", "options": ["A. 面對人生的分岔路口，我們究竟該如何做出不悔的抉擇？", "B. 我不知道明天的模擬考難度究竟有多高？心裡難免感到忐忑不安", "C. 這道難題真的完全無法解開嗎？我不禁陷入了深深的沉思", "D. 難道這就是你苦思冥想整晚所交出的作文答卷嗎？"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n句中雖有疑問詞「有多高」，但全句的主幹是「我不知道……」，整句話屬於陳述語氣，並非發問求答的疑問句，句末絕不可用問號，此處應改用逗號，全句句末用句號。(A)、(C)、(D) 皆帶有明確的發問、反問或自問語氣，使用問號無誤。"}, {"id": 79, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "標點符號：冒號與引號之管轄範圍", "stem": "下列關於「冒號與引號」的標點使用，哪一個選項【完全符合規範】？", "options": ["A. 張媽說：「我們要懂得在忙碌中留白」，這樣才能走得更遠", "B. 張媽走進教室說：「同學們，請大家翻開課本第四十五頁。」", "C. 張媽說：「請大家安靜！」，隨後拿起了粉筆開始板書", "D. 他說他今天身體很不舒服：「想要請假回家休息。」"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n(B) 完整引用說話者原話，說後用冒號引號，句點放在引號之內，完全規範。\n(A) 引用之話作為作者句子的一部分，引號內逗號應移至引號外；\n(C) 驚嘆號在引號內，引號後面不應再接逗號；\n(D) 為間接轉述句（「他說他……」），非直接引用原文，不得使用冒號與引號。"}, {"id": 80, "cat": "會考病句辨析", "cat_name": "會考常考病句判斷與解說", "title": "標點符號：破折號功能與詞義重複", "stem": "破折號（——）常用於解釋說明。下列文句中，哪一句的破折號使用【不恰當】（與文字功能重複）？", "options": ["A. 國三生最需要的不是更多的考卷，而是內心的平靜——那是一種能安頓靈魂的力量", "B. 六和國中部本次特訓的核心目標——也就是說要全面提升學生的寫作思維與修訂能力", "C. 邁向成功的關鍵只有一個——自律", "D. 伴隨一聲脆響——球棒精準擊中了迎面飛來的紅線棒球"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n破折號在此處的作用本身就是「引出解釋說明」，與後面的「也就是說」在功能上完全重疊。兩者不可並用，應刪去「也就是說」，保留破折號；或刪去破折號，改用逗號接「也就是說」。(A)、(C) 為標準破折號解釋說明；(D) 破折號表聲音延續與轉折。"}, {"id": 81, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "表達方式：客觀寫景描寫之判定", "stem": "下列文句，何者純粹屬於客觀景物與空間氛圍的「寫景描寫」，不夾雜直接的主觀說理與抒情？", "options": ["A. 殘陽如血，薄暮中的操場漸次沉寂；秋風捲起幾片枯黃的欒樹落葉，在泛著微涼露水的紅色跑道上沙沙旋舞", "B. 每次看到夕陽西下，我內心便湧起一陣難以言喻的感傷，韶光易逝，年少的情懷究竟該向何處安放？", "C. 所謂的夕陽餘暉，實為大氣層對太陽光進行瑞利散射所產生的光學物理現象", "D. 面對夕陽的短暫，我們更應珍惜當下寸陰，不可虛度生命中的每一個黃昏"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n(A) 純粹以客觀鏡頭描摹「殘陽、薄暮、操場、落葉、跑道露水」，屬於典型的【寫景（描寫）】。\n(B) 直接吐露內心傷感，屬於【抒情】；\n(C) 解釋光學散射原理，屬於【說明】；\n(D) 提出應珍惜寸陰的主張，屬於【議論】。"}, {"id": 82, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "表達方式：議論表達方式之判定", "stem": "下列文句，何者屬於表達作者主張與觀點的「議論」文字？", "options": ["A. 考卷如雪片般發下，我接過試卷，手指微微顫抖地寫下自己的座號與姓名", "B. 成長的本質並非索取與佔有，而是一場學會篩選、承擔代價的深刻自覺", "C. 這座新建的自習室佔地約一百坪，配備有一百二十張獨立隔板書桌與柔和護眼檯燈", "D. 啊！母愛是多麼深沉而偉大，像一盞永不熄滅的明燈，照亮我漆黑前行的長夜"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n議論是作者對客觀事物進行分析、評論，藉以表明自己的觀點與立場。(B) 對「成長的本質」提出哲理性的界定與主張，屬於典型的【議論】。\n(A) 記錄動作過程，為【記敘/描寫】；\n(C) 介紹自習室坪數設備，為【說明】；\n(D) 讚頌母愛，為【抒情】。"}, {"id": 83, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "表達方式：說明表達方式之判定", "stem": "下列文句，何者屬於傳達客觀知識、解說事物性狀的「說明」文字？", "options": ["A. 國中教育會考寫作測驗採引導式寫作，題型多結合生活情境與圖表資訊，評分規準依立意取材、結構組織、遣詞造句及錯別字等向度分為一至六級分", "B. 我深深覺得會考寫作題目出得非常好，每一道題都能測驗出學生的真實靈魂深度", "C. 考場外的微風輕輕拂過菩提樹葉，灑下一地碎金般的斑駁光影", "D. 凝視著那張空白的作文稿紙，我的心底不由得升騰起一股昂揚的戰意與自信"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n(A) 客觀、冷靜、中立地解說會考寫作的題型特徵、測驗形式與評分規準，不帶主觀評價，是標準的【說明】。\n(B)「我深深覺得……好」屬於【主觀議論/評論】；\n(C) 為【寫景】；\n(D) 描寫內心戰意與自信，為【抒情/心理描寫】。"}, {"id": 84, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "表達方式：直抒胸臆之直接抒情", "stem": "抒情可分為「直接抒情」與「間接抒情」。下列文句，何者屬於不假借景物媒介、直抒胸臆的【直接抒情】？", "options": ["A. 孤舟蓑笠翁，獨釣寒江雪", "B. 感時花濺淚，恨別鳥驚心", "C. 我好痛苦！面對這場漫長而令人窒息的升學苦役，我多麼渴望能痛快地放聲大哭！", "D. 庭有枇杷樹，吾妻死之年所手植也，今已亭亭如蓋矣"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n(C) 完全不借助任何客觀物象為載體，直接以「我好痛苦！」、「多麼渴望放聲大哭！」抒發內心悲愴，屬於典型的【直接抒情（直抒胸臆）】。\n(A) 融情入景；(B) 借花鳥以抒亡國之痛；(D) 借枇杷樹亭亭如蓋寄寓對亡妻哀思，皆為高明的【間接抒情】。"}, {"id": 85, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "表達方式：借景抒情與托物言志", "stem": "「窗台那盆仙人掌在乾涸的盆土中，悄然綻開了一朵鵝黃色的小花；在焦灼的備考日子裡，那抹微弱的明黃，無聲地溫暖了我早已枯竭的心靈。」這段文字主要運用的表達方式為何？", "options": ["A. 說明與議論相結合", "B. 借景抒情（托物言志）的描寫兼抒情", "C. 純粹客觀記敘", "D. 定義說明與分類解說"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n作者先描寫仙人掌在乾土中綻放黃花的物象（描寫），進而借這朵微弱而頑強的花朵，寄寓自己枯竭心靈獲得溫暖與鼓舞的心境（抒情），屬於典型的【借景抒情/托物言志（描寫兼抒情）】。"}, {"id": 86, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "表達方式：說明與議論之界線", "stem": "閱讀下列兩段文句：\n甲：「番茄富含茄紅素與多種維生素，經加熱烹調後更易於人體吸收營養。」\n乙：「多吃番茄是現代人維持健康最明智的飲食投資，我們應當在生活中堅決減少垃圾食物的攝取。」\n關於甲、乙兩段文字表達方式的判斷，何者正確？", "options": ["A. 甲為說明，乙為議論", "B. 甲為議論，乙為說明", "C. 甲、乙皆為說明", "D. 甲、乙皆為議論"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n甲文客觀介紹番茄所含營養成分與物理吸收特性，為【說明】；\n乙文提出「最明智的飲食投資」、「應當堅決減少垃圾食物」的價值倡導與行動主張，為【議論】。因此選 (A)。"}, {"id": 87, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "描寫手法：白描與工筆細描之判定", "stem": "「父親戴著黑布小帽，穿著黑布大馬褂，深青布棉袍，蹣跚地走到鐵道邊，慢慢探身下去。」這段文字主要運用了何種描寫技巧？", "options": ["A. 不加濃墨重彩修飾，以質樸線條勾勒人事物輪廓的「白描」手法", "B. 運用繁複比喻與華麗辭藻描摹物象的「工筆細描」手法", "C. 藉由虛無縹緲的想像拓展時空的「虛構」手法", "D. 以強烈誇飾渲染氣氛的「誇張」手法"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n題幹取自朱自清《背影》，純粹以樸實文字勾勒父親的衣著（黑布小帽、大馬褂、深青棉袍）與動作（蹣跚、探身），不加華麗形容詞，卻極具神韻與情感張力，為文學史上公認的【白描】典範。"}, {"id": 88, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "篇章功能：記敘中的畫龍點睛式議論", "stem": "在記敘文的結尾，作者常以一句話點破事件蘊含的人生哲理，稱為「畫龍點睛式議論」。下列文句置於文章末尾，何者最能起到這種效果？", "options": ["A. 我走出了校門，搭乘下午五點三十分的二路公車回家吃晚飯", "B. 原來，青春的行囊無需盛滿所有欲望；學會割捨的那一刻，我們方才真正擁有了前行的羽翼", "C. 那天晚上的月亮非常圓，天上還有很多顆一閃一閃的小星星", "D. 媽媽在廚房裡煮了我最愛喝的排骨玉米湯，味道聞起來香氣撲鼻"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n記敘文末尾的點睛之筆必須從具體事件中提煉出普遍性的人生哲思。(B) 由前文的取捨經歷，昇華總結出「學會割捨方能擁有羽翼」的深刻哲理，使全篇敘事立體化，屬於典型的【畫龍點睛式議論】。\n(A) 為流水帳記敘；(C) 為寫景；(D) 為生活細節敘述。"}, {"id": 89, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "說明方法：定義說明方法之辨識", "stem": "「所謂的『心理韌性』，是指個體面對壓力、創傷或逆境時，能夠有效調適並自逆境中迅速反彈復原的內在心理機能。」這段文字運用了說明文中的何種說明方法？", "options": ["A. 下定義（定義說明）", "B. 舉例子（舉例說明）", "C. 作比較（比較說明）", "D. 列數字（數據說明）"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n下定義（定義說明）是用簡明、準確的語言，對事物的本質屬性做概括性的界定，常用句式為「所謂……是指……」。題幹精準界定了心理韌性的本質特徵，是標準的【下定義說明】。"}, {"id": 90, "cat": "表達方式判斷", "cat_name": "四大表達方式（寫景·議論·說明·抒情）", "title": "複合表達：議論兼抒情之融匯", "stem": "閱讀下列文段：「那些在深夜伏案中所忍受的孤寂，絕非青春的虛度；每一滴浸入講義的汗水，都是命運在暗處為我們澆灌的花期。願我們皆能在風雨沉潛後，迎來破土抽芽的燦爛盛放！」這段文字融匯了哪兩種表達方式？", "options": ["A. 說明與描寫", "B. 議論與抒情", "C. 記敘與說明", "D. 純粹寫景描寫"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n前半段「忍受孤寂絕非虛度，汗水是澆灌花期」提出對讀書奮鬥的理性評價（議論）；後半段「願我們皆能在風雨沉潛後迎來盛放」傾注了熱切的祝福與期盼（抒情），理性說理與感性抒情水乳交融，屬於典型的【議論兼抒情】。"}, {"id": 91, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "邏輯思維：歸納法與演繹法之辨別", "stem": "「勾踐臥薪嘗膽終滅吳國；司馬遷忍辱負重成《史記》；曹雪芹歷經家族敗落方撰出《紅樓夢》。可見，生命中的苦難與沈潛，往往是成就非凡事業的必要熔爐。」這段論述在邏輯推理上屬於下列何者？", "options": ["A. 歸納法（從個別具體事例推導出一般性普遍原則）", "B. 演繹法（從普遍大前提推導出特定個別結論）", "C. 遞進法（按時間先後之順序推演）", "D. 排除法（列舉所有可能一一予以排除否定）"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n【歸納法】是由「個別到一般」：先列舉勾踐、司馬遷、曹雪芹三個個別歷史人物的經歷，最後總結歸納出「苦難沉潛是成就非凡事業的熔爐」這一普遍規律。\n【演繹法】則是由「一般到個別」：先立普遍大前提（如凡人都會死），再推導個別小前提（蘇格拉底是人，故蘇格拉底會死）。"}, {"id": 92, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "敘事視角：人稱轉換之表達效果", "stem": "文章在回顧國三奮鬥歷程時，突然由第一人稱「我」轉換為第二人稱「你」：「少年啊，請你千萬不要在黎明破曉前向黑暗妥協，你腳下的每一道泥濘，都在為未來的花海鋪路！」這種人稱轉換的主要寫作用意為何？", "options": ["A. 客觀全知地俯瞰所有人物的心理活動，使視角不受時空限制", "B. 營造與讀者或另一個自我促膝長談的親近感與直接叮嚀的對話張力，強化抒情感染力", "C. 大幅節省文章字數，避免重複使用過多主詞", "D. 符合新聞報導的客觀公正原則，避免作者的主觀偏見"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n第二人稱「你」具有拉近心理距離、營造如面相對、深情叮嚀的對話感，常用於自我對話、呼告或直接對讀者傳遞情感，能極大增強呼喚與共鳴的張力。\n(A) 為第三人稱全知視角的特點；(C)、(D) 與第二人稱的修辭特徵不符。"}, {"id": 93, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "修辭辨析：將抽象事物具體呈現（擬物/化虛為實）與擬人、譬喻之辨析", "stem": "文學作品中常運用「將抽象事物具體呈現（化虛為實）」的手法，如李清照〈武陵春〉「只恐雙溪舴艋舟，載不動許多愁」，將無形的情感化為具體有重量、可用舟船載運的實體物。下列文句，何者同樣屬於「將抽象事物具體呈現（擬物化）」的修辭手法？", "options": ["A. 寂寞在深夜的走廊上徘徊遊蕩，悄悄叩響每一扇緊閉的心門", "B. 鄉愁是一張窄窄的船票，我在此頭，母親在那頭", "C. 他將滿腔難以言喻的挫折與焦慮，狠狠揉成一團，塞進了記憶最幽暗的抽屜深處", "D. 操場邊的老榕樹伸展著粗壯的臂膀，替揮汗奔馳的少年撐起一片綠蔭"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n本題考查會考經典修辭：「將抽象概念具體化（化虛為實／擬物）」與「擬人」、「譬喻」的精妙差異：\n1. 【將抽象事物具體呈現（擬物化／化虛為實）】：不使用比喻詞（如「像、是」），而是直接將無形無色無重量的抽象情感或概念（如愁緒、挫折、思念、時間），當作看得見、摸得著、具有形體重量的實體物件來處置描寫。(C) 將抽象的「挫折與焦慮」當作實體物件，「狠狠揉成一團、塞進抽屜深處」，屬於標準的將抽象事物具體呈現（擬物化）。\n2. 【擬人（Personification）】：將物或抽象概念賦予「人類的言語、動作、神態與情感」；(A) 將「寂寞」賦予人的動作「徘徊遊蕩、叩響心門」；(D) 將「老榕樹」賦予人的特徵「伸展臂膀撐起綠蔭」，兩者皆為擬人。\n3. 【譬喻（Metaphor）】：具備本體與喻體，兩者具有相似點並藉由比喻詞相連；(B) 余光中名句中，「鄉愁」是本體，「船票」是喻體，「是」是繫詞（隱喻），透過打比方的方式形象化，屬於譬喻法，而非擬物。"}, {"id": 94, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "描寫技巧：以動襯靜手法之辨析", "stem": "王維詩句「月出驚山鳥，時鳴春澗中」運用了「以動襯靜」的手法。下列描寫國三夜讀的文句，何者同樣巧妙運用了【以動襯靜】？", "options": ["A. 教室裡鴉雀無聲，所有人都趴在桌上睡著了，周圍沒有一點聲音", "B. 深夜萬籟俱寂，唯有窗前那隻迷途的飛蛾撞擊玻璃的微弱撲簌聲，將整座長夜的靜謐襯托得愈發幽邃深沉", "C. 操場上人聲鼎沸，加油吶喊聲此起彼落，把整個午後的氣氛炒熱到了最高點", "D. 房間裡開著冷氣，溫度設定在二十四度，書桌上的書本擺放得整整齊齊"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n以動襯靜是指用細微的動態或聲響，反襯出周圍環境極度的寂靜與專注。(B) 藉「飛蛾撞擊玻璃的微弱撲簌聲」，反襯出深夜萬籟俱寂的幽邃，是教科書級的「以動襯靜」。\n(A) 只是直接說沒有聲音；(C) 為純熱鬧動態；(D) 為靜態事實陳列。"}, {"id": 95, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "描寫角度：主觀描寫與客觀描寫之區分", "stem": "下列描寫「發下考卷」情境的文句，何者屬於將個人情感強烈投射於外物的【主觀描寫】？", "options": ["A. 國文模擬考卷為八開雙面印製，包含單選題四十題與非選擇題一題，滿分為一百分", "B. 監考的張媽將裝訂好的考卷拆封，從第一排依序向後傳遞，發給在座的每一位考生", "C. 慘白的試卷在日光燈下散發著令人心悸的寒光，那些密密麻麻的鉛字宛如伺機噬人的蟻群，嘲弄著我蒼白無力的記憶", "D. 教室的鐘聲在上午八點整準時響起，全班同學隨即停止交談開始答題"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n(C) 帶有極為強烈的主觀情感色彩：試卷被賦予「散發心悸寒光」、鉛字被描繪為「伺機噬人的蟻群」、「嘲弄蒼白記憶」，景物完全染上了作者內心焦慮恐懼的情緒，屬於典型的【主觀描寫】。\n(A)、(B)、(D) 皆如攝影機般客觀記錄事實，屬於【客觀描寫】。"}, {"id": 96, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "章法架構：總分總結構之判定", "stem": "某篇滿分作文的結構安排如下：\n【首段】提出「生活如同繪畫，懂得取捨留白才能彰顯主體」；\n【二段】詳述自己在課業衝刺中割捨手機娛樂的自律過程；\n【三段】述及在與朋友相處時放棄浮泛盲從、選擇深度交流的心境；\n【末段】總結全篇，點出「留白不是空白，而是替未來生命預留綻放的沃土」。\n這種篇章結構屬於下列何者？", "options": ["A. 總——分——總結構", "B. 純粹並列式結構", "C. 倒敘回憶式結構", "D. 單純遞進式結構"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n第一段總起全篇、提出中心意象（總）；中間第二、三段分別從課業自律與同儕社交兩個切面進行分述事例（分）；第四段呼應首段並昇華主題進行哲理收束（總）。這是會考與大考作文最推崇、結構最嚴謹均衡的「總——分——總」架構。"}, {"id": 97, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "立論技巧：破立結合之論證章法", "stem": "下列段落中，何者運用了「先反駁錯誤迷思（破），再樹立正確主張（立）」的破立結合手法？", "options": ["A. 我從小就非常喜歡打籃球，無論颳風下雨，只要一放學我一定會衝向球場", "B. 有人以為「時間管理就是把二十四小時壓榨到極致，塞滿每一分每一秒」；然而，這不過是自我感動的消耗戰。真正的時間管理，在於懂得勇敢剔除低效的虛耗，為心靈保留深呼吸的空白", "C. 國三的生活雖然辛苦，但是只要我們堅持到底，就一定能夠看見勝利的曙光", "D. 媽媽每天清晨五點就起床為我準備早餐，看著媽媽忙碌的身影，我心中充滿了感激"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n(B) 先指出社會上常見的錯誤迷思：「有人以為壓榨滿24小時就是時間管理」（破錯誤觀點）；隨後以「然而……真正的時間管理在於剔除虛耗、保留空白」確立正確主張（立正確論點），展現了思辨力極強的「先破後立」立論章法。"}, {"id": 98, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "表現手法：對比與襯托（烘托）之區分", "stem": "在寫作修辭與章法中，「對比」是將「兩種不同性質的事物」或「同一事物在不同時空、不同觀點面向」並列比較，藉由差異互見來突顯各自特點（兩者地位平等）；而「襯托（烘托）」則是以次要事物作為陪襯，目的在突顯主要主體（有鮮明主次之分）。據此判斷，下列文句何者屬於【襯托（以次襯主）】而非對比？", "options": ["A. 昔日的我總在模擬考分數起伏中焦躁自憐，如今的我已學會在靜默訂正中凝視自我", "B. 淺見者視留白為怠惰逃避，深思者視留白為蓄勢待發", "C. 桃花潭水深千尺，不及汪倫送我情", "D. 謙遜使人涵養深厚，驕傲使人目光狹隘"], "answer": 2, "analysis": "【張媽叮嚀】選 (C)。\n張媽特別提醒：「對比」既包含【不同事物的橫向比較】（如 D 項謙遜 vs. 驕傲、或「朱門酒肉臭，路有凍死骨」），也包含【同一事物在不同時間（昔與今，如 A 項昔日焦躁 vs. 今日沉穩）或不同觀點角度（如 B 項淺見者視角 vs. 深思者視角）的並列比較】，兩者在篇章中地位平等，旨在藉由參照揭示矛盾與特質。\n而【襯托（烘托）】則有極為明確的「主次之分」——(C) 李白名句中，千尺潭水（次要事物）純粹是用來作為引子與陪襯，唯一目的是要襯托出「汪倫對我的深厚情誼（主要主體）」，因此屬於標準的「以次襯主（陪襯）」手法。"}, {"id": 99, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "表現手法：虛實相生之藝術筆法", "stem": "文章中「眼前真實景象為實，回憶、夢境、想像為虛」，虛實相映能大幅拓展文章意境。下列文句，何者展現了【虛實相生】的高超筆法？", "options": ["A. 我坐在冷冰冰的考場書桌前，筆尖在白紙上沙沙滑動；恍惚間，耳畔彷彿響起了去年夏天在合唱團練唱時那悠揚的琴聲與夥伴們純真的笑靨，微風吹過琴房窗簾的馨香，瞬間撫平了此刻緊繃的神經", "B. 考場外的大雨一直下個不停，操場上的積水越來越深，幾隻麻雀躲在走廊屋簷下避雨", "C. 張媽在台上發下一張張模擬考成績單，全班同學都屏住呼吸，不敢發出一點聲音", "D. 這次段考一共考了五個科目，每一科的滿分都是一百分，考完試大家都很想趕快放假"], "answer": 0, "analysis": "【張媽叮嚀】選 (A)。\n(A)「眼前考場冰冷書桌與滑動的筆尖」是客觀存在的眼前【實景】；而「恍惚間回想起去年夏天的琴聲、笑靨與微風馨香」是思緒飄飛的記憶【虛景】。虛景與實景交織相映，賦予文章飽滿的情感層次與時空張力，是典範的【虛實相生】。"}, {"id": 100, "cat": "章法結構手法", "cat_name": "章法結構與寫作手法深度分析", "title": "章法結構：首尾呼應與意象閉環", "stem": "文章首段提及「書桌右上角放著一枚生鏽的指南針，那是出發前爺爺交給我的行囊」；末段寫道：「摸著口袋裡那枚微溫的指南針，我終究明白：國三這場漫長的取捨不是迷航，而是校準。當指針在震顫後堅定地指向南方，我已在歲月的淬鍊中，找到了通往自我命運的真正航道。」這種結構安排在章法上具有何種作用？", "options": ["A. 倒敘回憶，製造懸疑緊張的戲劇效果", "B. 首尾呼應，完成意象閉環並深化文章主旨", "C. 欲揚先抑，反襯主角性格的前後矛盾", "D. 插敘補述，交代故事前因後果之背景"], "answer": 1, "analysis": "【張媽叮嚀】選 (B)。\n文章開頭埋下「生鏽指南針」之物象伏筆，結尾再次回扣並將指針的「震顫校準」昇華為「心靈面對取捨後的航道確認」，前後緊密呼應、首尾圓融，構成完美的意象閉環，極大深化了文章的立意哲理，屬於標準的【首尾呼應】。"}];
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      projectId: "smartclass-tinachang-0501",
+      appId: "1:643663499622:web:eb4554c230c0095a2b38a7",
+      storageBucket: "smartclass-tinachang-0501.firebasestorage.app",
+      apiKey: atob("QUl6YVN5QVROM3VjalgwREJ1S2plZm1NMGJTZXR4LTNZYk42T09J"),
+      authDomain: "smartclass-tinachang-0501.firebaseapp.com",
+      messagingSenderId: "643663499622",
+      projectNumber: "643663499622"
+    };
+
+    let db = null;
+    let isFirebaseConnected = false;
+    try {
+      if (typeof firebase !== 'undefined') {
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.firestore();
+        isFirebaseConnected = true;
+      }
+    } catch (e) {
+      console.warn("Firebase Init notice:", e);
+    }
+
+    // State Variables
+    let currentStudent = null; // { class, seat, name, key }
+    let currentAttempt = 1;
+    let quizStartTime = null;
+    let timerSeconds = 0;
+    let timerInterval = null;
+    let userAnswers = {}; // { qId: optIdx }
+    let currentCategory = "全部";
+    let isMistakesOnly = false;
+    let currentMode = "quiz";
+    let isSoundEnabled = true;
+
+    // Admin State
+    let adminSubmissions = [];
+    let adminFilterClass = "ALL";
+
+    // Categories (10 Categories, Total 100 Questions)
+    const categories = [
+      { id: "全部", label: "全部 100 道佳餚", count: 100, icon: "🍲" },
+      { id: "作文擴充", label: "火候煲湯·篇章擴充", count: 8, icon: "📌" },
+      { id: "細節描寫判斷", label: "調味摹寫·感官細節", count: 9, icon: "🔍" },
+      { id: "結構是否完整", label: "骨架擺盤·段落結構", count: 8, icon: "🏛️" },
+      { id: "具體事件說明", label: "精選食材·事件特寫", count: 9, icon: "🥩" },
+      { id: "是否合理因果", label: "烹飪邏輯·因果思辨", count: 8, icon: "⚖️" },
+      { id: "是否呈現前後改變", label: "回甘餘韻·心境轉折", count: 8, icon: "🍵" },
+      { id: "論述論據論證", label: "立論推演·論述論據", count: 10, icon: "🎯" },
+      { id: "會考病句辨析", label: "語病診斷·會考病句", count: 20, icon: "💊" },
+      { id: "表達方式判斷", label: "景議說抒·表達方式", count: 10, icon: "✍️" },
+      { id: "章法結構手法", label: "章法剖析·寫作手法", count: 10, icon: "📐" },
+    ];
+
+    // Populate Seat Options (01 to 50)
+    function initSeatOptions() {
+      const select = document.getElementById('login-seat');
+      select.innerHTML = '<option value="">-- 請選擇座號 --</option>';
+      for (let i = 1; i <= 50; i++) {
+        const seatStr = i < 10 ? '0' + i : '' + i;
+        const opt = document.createElement('option');
+        opt.value = seatStr;
+        opt.textContent = seatStr + ' 號';
+        select.appendChild(opt);
+      }
+    }
+
+    // Web Audio Chimes
+    const audioCtx = (window.AudioContext || window.webkitAudioContext) ? new (window.AudioContext || window.webkitAudioContext)() : null;
+    function playSound(type) {
+      if (!isSoundEnabled || !audioCtx) return;
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+
+        if (type === 'correct') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(659.25, now);
+          osc.frequency.exponentialRampToValueAtTime(987.77, now + 0.18);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'incorrect') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.2);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        }
+      } catch (e) {
+        console.warn("Audio play error", e);
+      }
+    }
+
+    function toggleSound() {
+      isSoundEnabled = !isSoundEnabled;
+      document.getElementById('sound-icon').textContent = isSoundEnabled ? '🔊' : '🔇';
+    }
+
+    // ==================== Student Identification Flow ====================
+    function checkStudentSession() {
+      const saved = localStorage.getItem('zm_current_student');
+      if (saved) {
+        try {
+          currentStudent = JSON.parse(saved);
+          loadStudentAttemptHistory();
+          updateStudentBadge();
+          startTimer();
+          document.getElementById('student-modal').classList.add('hidden');
+          return;
+        } catch (e) {}
+      }
+      document.getElementById('student-modal').classList.remove('hidden');
+    }
+
+    function handleStudentLogin(e) {
+      e.preventDefault();
+      const cls = document.getElementById('login-class').value;
+      const seat = document.getElementById('login-seat').value;
+      const name = document.getElementById('login-name').value.trim();
+
+      if (!cls || !seat || !name) {
+        alert("請完整選擇班級、座號並填入姓名！");
+        return;
+      }
+
+      currentStudent = {
+        class: cls,
+        seat: seat,
+        name: name,
+        key: `${cls}_${seat}_${name}`
+      };
+      localStorage.setItem('zm_current_student', JSON.stringify(currentStudent));
+
+      loadStudentAttemptHistory();
+      updateStudentBadge();
+      startTimer();
+
+      document.getElementById('student-modal').classList.add('hidden');
+    }
+
+    function loadStudentAttemptHistory() {
+      if (!currentStudent) return;
+      const key = currentStudent.key;
+      const localAttempts = JSON.parse(localStorage.getItem('zm_attempts_' + key) || '0');
+      currentAttempt = localAttempts + 1;
+    }
+
+    function updateStudentBadge() {
+      if (!currentStudent) return;
+      document.getElementById('badge-student-info').textContent = `${currentStudent.class}班 ${currentStudent.seat}號 ${currentStudent.name}`;
+      document.getElementById('badge-attempt-info').textContent = `第 ${currentAttempt} 次嘗試`;
+    }
+
+    function promptSwitchStudent() {
+      if (confirm("要切換其他同學或重新登記嗎？目前的作答進度將暫存。")) {
+        document.getElementById('student-modal').classList.remove('hidden');
+      }
+    }
+
+    // ==================== Timer System ====================
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      quizStartTime = new Date();
+      timerSeconds = 0;
+      timerInterval = setInterval(() => {
+        timerSeconds++;
+        const mins = Math.floor(timerSeconds / 60);
+        const secs = timerSeconds % 60;
+        const timeStr = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+        const badgeTimer = document.getElementById('badge-timer');
+        if (badgeTimer) badgeTimer.textContent = timeStr;
+      }, 1000);
+    }
+
+    function formatTime(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      if (mins === 0) return `${secs}秒`;
+      return `${mins}分${secs}秒`;
+    }
+
+    // ==================== UI Rendering ====================
+    function init() {
+      initSeatOptions();
+      checkStudentSession();
+      renderCategoryBar();
+      renderNavigator();
+      renderQuestions();
+      updateStats();
+    }
+
+    function renderCategoryBar() {
+      const bar = document.getElementById('category-filter-bar');
+      bar.innerHTML = categories.map(cat => {
+        const isActive = currentCategory === cat.id && !isMistakesOnly;
+        return `
+          <button onclick="selectCategory('${cat.id}')" class="px-3 py-1.5 rounded-xl text-xs font-medium transition flex items-center gap-1.5 ${
+            isActive
+              ? 'bg-amber-600 text-white shadow-md shadow-amber-500/20'
+              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+          }">
+            <span>${cat.icon}</span>
+            <span>${cat.label}</span>
+            <span class="text-[11px] px-1.5 py-0.2 rounded-full ${
+              isActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
+            } font-mono">${cat.count}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function renderNavigator() {
+      const grid = document.getElementById('navigator-grid');
+      grid.innerHTML = questions.map(q => {
+        const ans = userAnswers[q.id];
+        let stateClass = "bg-slate-100 text-slate-600 hover:bg-slate-200";
+        if (ans !== undefined) {
+          stateClass = (ans === q.answer)
+            ? "bg-emerald-500 text-white font-bold"
+            : "bg-rose-500 text-white font-bold";
+        }
+        return `
+          <button onclick="scrollToQuestion(${q.id})" id="nav-btn-${q.id}" class="h-7 rounded-md text-[11px] font-mono transition flex items-center justify-center ${stateClass}" title="第 ${q.id} 題（${q.cat}）">
+            ${q.id}
+          </button>
+        `;
+      }).join('');
+    }
+
+    function getFilteredQuestions() {
+      return questions.filter(q => {
+        if (isMistakesOnly) {
+          return userAnswers[q.id] !== undefined && userAnswers[q.id] !== q.answer;
+        }
+        if (currentCategory === "全部") return true;
+        return q.cat === currentCategory;
+      });
+    }
+
+    function renderQuestions() {
+      const list = document.getElementById('questions-list');
+      const filtered = getFilteredQuestions();
+
+      document.getElementById('current-view-title').textContent = isMistakesOnly ? "所有錯題精選" : currentCategory;
+      document.getElementById('current-view-count').textContent = `（共 ${filtered.length} 題）`;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-16 bg-white rounded-3xl border border-slate-200/80 p-8">
+            <div class="text-4xl mb-2">🎉</div>
+            <h3 class="text-lg font-bold text-slate-700 font-serif-tc">太棒了！此分類目前無錯題</h3>
+            <p class="text-xs text-slate-400 mt-1">繼續保持敏銳的思維火候，前往其他單元挑戰吧！</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = filtered.map(q => renderQuestionCard(q)).join('');
+    }
+
+    function renderQuestionCard(q) {
+      const answered = userAnswers[q.id] !== undefined;
+      const userChoice = userAnswers[q.id];
+      const isCorrect = answered && (userChoice === q.answer);
+      const showAnalysis = (currentMode === 'study') || answered;
+
+      let cardBorder = "border-slate-200/80";
+      let statusBadge = "";
+      if (answered) {
+        if (isCorrect) {
+          cardBorder = "border-emerald-300 ring-1 ring-emerald-400/40 bg-emerald-50/10";
+          statusBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">✓ 正確</span>';
+        } else {
+          cardBorder = "border-rose-300 ring-1 ring-rose-400/40 bg-rose-50/10";
+          statusBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">✗ 需複習</span>';
+        }
+      }
+
+      const optionsHtml = q.options.map((opt, idx) => {
+        let optStyle = "border-slate-200 hover:border-amber-400 hover:bg-amber-50/30 text-slate-700 bg-white";
+        let markIcon = "";
+
+        if (answered) {
+          if (idx === q.answer) {
+            optStyle = "border-emerald-500 bg-emerald-50 text-emerald-950 font-medium ring-1 ring-emerald-500";
+            markIcon = '<span class="ml-auto text-emerald-600 font-bold">✓ 正確配方</span>';
+          } else if (idx === userChoice) {
+            optStyle = "border-rose-500 bg-rose-50 text-rose-950 font-medium ring-1 ring-rose-500";
+            markIcon = '<span class="ml-auto text-rose-600 font-bold">✗ 你的選擇</span>';
+          } else {
+            optStyle = "border-slate-200 text-slate-400 bg-slate-50 opacity-60";
+          }
+        } else if (currentMode === 'study' && idx === q.answer) {
+          optStyle = "border-emerald-500 bg-emerald-50/60 text-emerald-950 font-medium";
+          markIcon = '<span class="ml-auto text-emerald-600 font-bold text-xs">（參考解答）</span>';
+        }
+
+        return `
+          <button onclick="selectOption(${q.id}, ${idx})" class="w-full text-left p-3.5 sm:p-4 rounded-xl border text-xs sm:text-sm transition flex items-start gap-3 ${optStyle}">
+            <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-slate-100 text-slate-700 font-mono text-xs font-bold shrink-0 mt-0.5">
+              ${['A','B','C','D'][idx]}
+            </span>
+            <span class="flex-1 leading-relaxed">${opt}</span>
+            ${markIcon}
+          </button>
+        `;
+      }).join('');
+
+      return `
+        <div id="q-card-${q.id}" class="card-box bg-white rounded-2xl p-5 sm:p-6 shadow-sm border ${cardBorder} transition-all">
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 font-mono text-xs font-bold">
+                第 ${q.id} 題
+              </span>
+              <span class="text-xs px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-600 font-medium">
+                ${q.cat_name}
+              </span>
+            </div>
+            <div>${statusBadge}</div>
+          </div>
+
+          <h3 class="text-sm sm:text-base font-bold text-slate-900 font-serif-tc mb-2.5">
+            ${q.title}
+          </h3>
+
+          <p class="text-xs sm:text-sm text-slate-700 leading-relaxed mb-4 bg-amber-50/40 p-3.5 rounded-xl border border-amber-100/80">
+            ${q.stem}
+          </p>
+
+          <div class="space-y-2 mb-4">
+            ${optionsHtml}
+          </div>
+
+          <div class="pt-3 border-t border-slate-100 ${showAnalysis ? '' : 'hidden'} bg-amber-50/50 -mx-5 -mb-5 sm:-mx-6 sm:-mb-6 p-4 sm:p-5 rounded-b-2xl border-t border-amber-200/50">
+            <div class="flex items-center justify-between text-xs font-bold text-amber-950 mb-2">
+              <span class="flex items-center gap-1.5">
+                <span>💡</span> 張媽叮嚀
+              </span>
+              <span class="px-2.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-mono font-bold">正確配方：${['A','B','C','D'][q.answer]}</span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+              ${q.analysis}
+            </p>
+          </div>
+        </div>
+      `;
+    }
+
+    // Handle Option Click
+    function selectOption(qId, optIdx) {
+      const q = questions.find(item => item.id === qId);
+      if (!q) return;
+
+      userAnswers[qId] = optIdx;
+
+      if (optIdx === q.answer) {
+        playSound('correct');
+      } else {
+        playSound('incorrect');
+      }
+
+      updateQuestionCardUI(q);
+      updateNavButton(qId);
+      updateStats();
+    }
+
+    function updateQuestionCardUI(q) {
+      const card = document.getElementById(`q-card-${q.id}`);
+      if (card) {
+        card.outerHTML = renderQuestionCard(q);
+      }
+    }
+
+    function updateNavButton(qId) {
+      const btn = document.getElementById(`nav-btn-${qId}`);
+      if (!btn) return;
+      const q = questions.find(item => item.id === qId);
+      const ans = userAnswers[qId];
+
+      btn.className = "h-7 rounded-md text-[11px] font-mono transition flex items-center justify-center " +
+        (ans === undefined
+          ? "bg-slate-100 text-slate-600 hover:bg-slate-200"
+          : (ans === q.answer ? "bg-emerald-500 text-white font-bold" : "bg-rose-500 text-white font-bold"));
+    }
+
+    function scrollToQuestion(qId) {
+      if (isMistakesOnly) {
+        const isMistake = userAnswers[qId] !== undefined && userAnswers[qId] !== questions.find(q=>q.id===qId).answer;
+        if (!isMistake) {
+          isMistakesOnly = false;
+          renderCategoryBar();
+          renderQuestions();
+        }
+      }
+      const q = questions.find(item => item.id === qId);
+      if (currentCategory !== "全部" && q.cat !== currentCategory) {
+        currentCategory = "全部";
+        renderCategoryBar();
+        renderQuestions();
+      }
+
+      setTimeout(() => {
+        const el = document.getElementById(`q-card-${qId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ring-2', 'ring-amber-500');
+          setTimeout(() => el.classList.remove('ring-2', 'ring-amber-500'), 1500);
+        }
+      }, 50);
+    }
+
+    function selectCategory(catId) {
+      currentCategory = catId;
+      isMistakesOnly = false;
+      renderCategoryBar();
+      renderQuestions();
+    }
+
+    function toggleMistakesOnly() {
+      isMistakesOnly = !isMistakesOnly;
+      renderCategoryBar();
+      renderQuestions();
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('btn-mode-quiz').className = mode === 'quiz'
+        ? "px-3 py-1.5 rounded-lg bg-white text-slate-800 shadow-sm font-semibold transition"
+        : "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition";
+      document.getElementById('btn-mode-study').className = mode === 'study'
+        ? "px-3 py-1.5 rounded-lg bg-white text-slate-800 shadow-sm font-semibold transition"
+        : "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition";
+      renderQuestions();
+    }
+
+    function updateStats() {
+      const answeredKeys = Object.keys(userAnswers);
+      const totalAnswered = answeredKeys.length;
+      let correctCount = 0;
+      let mistakeCount = 0;
+
+      answeredKeys.forEach(k => {
+        const qId = parseInt(k);
+        const q = questions.find(item => item.id === qId);
+        if (q) {
+          if (userAnswers[qId] === q.answer) {
+            correctCount++;
+          } else {
+            mistakeCount++;
+          }
+        }
+      });
+
+      document.getElementById('progress-text').textContent = `${totalAnswered} / 100`;
+      document.getElementById('mistake-count').textContent = mistakeCount;
+
+      const acc = totalAnswered > 0 ? Math.round((correctCount / totalAnswered) * 100) : 0;
+      const accEl = document.getElementById('accuracy-text');
+      accEl.textContent = totalAnswered > 0 ? `${acc} %` : '-- %';
+      accEl.className = acc >= 80 ? "font-bold text-emerald-400 text-sm font-mono" : (acc >= 60 ? "font-bold text-amber-400 text-sm font-mono" : "font-bold text-rose-400 text-sm font-mono");
+    }
+
+    function resetAll() {
+      if (confirm("確定要重置所有作答記錄重新練習嗎？")) {
+        for (let k in userAnswers) delete userAnswers[k];
+        renderNavigator();
+        renderQuestions();
+        updateStats();
+      }
+    }
+
+    // ==================== Quiz Submission & Cloud Saving ====================
+    async function confirmSubmitQuiz() {
+      const answeredKeys = Object.keys(userAnswers);
+      const totalAnswered = answeredKeys.length;
+
+      if (totalAnswered < 100) {
+        const proceed = confirm(`您目前已完成 ${totalAnswered} / 100 題，還有 ${100 - totalAnswered} 題未作答。
+確定現在要提前交卷結算成績嗎？`);
+        if (!proceed) return;
+      }
+
+      let correctCount = 0;
+      const mistakes = [];
+      questions.forEach(q => {
+        const ans = userAnswers[q.id];
+        if (ans === q.answer) {
+          correctCount++;
+        } else {
+          mistakes.push({
+            id: q.id,
+            cat: q.cat,
+            title: q.title,
+            userAns: ans !== undefined ? ['A','B','C','D'][ans] : '未作答',
+            correctAns: ['A','B','C','D'][q.answer]
+          });
+        }
+      });
+
+      const score = Math.round((correctCount / 100) * 100);
+      const submitTime = new Date();
+      const durationSeconds = timerSeconds;
+      const durationText = formatTime(durationSeconds);
+
+      const submissionRecord = {
+        class: currentStudent ? currentStudent.class : "904",
+        seat: currentStudent ? currentStudent.seat : "01",
+        name: currentStudent ? currentStudent.name : "未知學生",
+        studentKey: currentStudent ? currentStudent.key : "904_01_未知學生",
+        score: score,
+        correctCount: correctCount,
+        totalQuestions: 100,
+        attemptCount: currentAttempt,
+        durationSeconds: durationSeconds,
+        durationText: durationText,
+        submitTime: submitTime.toLocaleString('zh-TW', { hour12: false }),
+        timestamp: Date.now(),
+        mistakeCount: mistakes.length,
+        mistakeIds: mistakes.map(m => m.id).join(', ')
+      };
+
+      try {
+        const allRecords = JSON.parse(localStorage.getItem('zm_submissions') || '[]');
+        allRecords.push(submissionRecord);
+        localStorage.setItem('zm_submissions', JSON.stringify(allRecords));
+
+        if (currentStudent) {
+          localStorage.setItem('zm_attempts_' + currentStudent.key, JSON.stringify(currentAttempt));
+        }
+      } catch (err) {
+        console.warn("Local storage save error:", err);
+      }
+
+      if (db) {
+        try {
+          await db.collection('zm_quiz_submissions').add({
+            ...submissionRecord,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          console.log("Submission successfully uploaded to Firestore!");
+        } catch (err) {
+          console.warn("Firestore upload error (cached locally):", err);
+        }
+      }
+
+      openDiagnosticModal(score, correctCount, totalAnswered, durationText);
+    }
+
+    // ==================== Diagnostic Modal ====================
+    function openDiagnosticModal(finalScore, finalCorrect, finalAnswered, timeFormatted) {
+      const answeredKeys = Object.keys(userAnswers);
+      const totalAnswered = finalAnswered !== undefined ? finalAnswered : answeredKeys.length;
+      let correctCount = 0;
+
+      answeredKeys.forEach(k => {
+        const qId = parseInt(k);
+        const q = questions.find(item => item.id === qId);
+        if (q && userAnswers[qId] === q.answer) correctCount++;
+      });
+
+      const score = finalScore !== undefined ? finalScore : (totalAnswered > 0 ? Math.round((correctCount / 100) * 100) : 0);
+
+      if (currentStudent) {
+        document.getElementById('diag-student-name').textContent = currentStudent.name;
+        document.getElementById('diag-student-class').textContent = `${currentStudent.class} 班 ${currentStudent.seat} 號`;
+        document.getElementById('diag-attempt-badge').textContent = `第 ${currentAttempt} 次嘗試`;
+      }
+      document.getElementById('diag-time-spent').textContent = `⏱️ 作答耗時：${timeFormatted || formatTime(timerSeconds)}`;
+
+      document.getElementById('diag-answered').textContent = `${totalAnswered} / 100`;
+      document.getElementById('diag-correct').textContent = correctCount;
+      document.getElementById('diag-rate').textContent = `${score} 分`;
+
+      // Category calculations
+      const catStats = {};
+      categories.filter(c => c.id !== "全部").forEach(c => {
+        catStats[c.id] = { total: 0, answered: 0, correct: 0, label: c.label };
+      });
+
+      questions.forEach(q => {
+        if (catStats[q.cat]) {
+          catStats[q.cat].total++;
+          if (userAnswers[q.id] !== undefined) {
+            catStats[q.cat].answered++;
+            if (userAnswers[q.id] === q.answer) {
+              catStats[q.cat].correct++;
+            }
+          }
+        }
+      });
+
+      let lowestCat = null;
+      let lowestRate = 101;
+
+      const barsContainer = document.getElementById('diagnostic-bars');
+      barsContainer.innerHTML = Object.keys(catStats).map(catKey => {
+        const s = catStats[catKey];
+        const catRate = s.answered > 0 ? Math.round((s.correct / s.answered) * 100) : 0;
+        if (s.answered > 0 && catRate < lowestRate) {
+          lowestRate = catRate;
+          lowestCat = s.label;
+        }
+        return `
+          <div>
+            <div class="flex justify-between text-xs font-semibold mb-1">
+              <span class="text-slate-700">${s.label} (${s.correct}/${s.answered} 題，全${s.total}題)</span>
+              <span class="font-mono ${catRate >= 80 ? 'text-emerald-600' : (catRate >= 60 ? 'text-amber-600' : 'text-rose-600')}">${s.answered > 0 ? catRate + '%' : '未作答'}</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+              <div class="h-full rounded-full transition-all duration-500 ${catRate >= 80 ? 'bg-emerald-500' : (catRate >= 60 ? 'bg-amber-500' : 'bg-rose-500')}" style="width: ${s.answered > 0 ? catRate : 0}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Prescription
+      const prescEl = document.getElementById('diagnostic-prescription');
+      if (totalAnswered < 10) {
+        prescEl.textContent = "建議至少完成 15 道以上題目，以利系統精確診斷出您的核心盲點向度。";
+      } else {
+        let advice = "";
+        if (score >= 85) {
+          advice = "【滿分大廚級】太驚豔了！您的寫作邏輯、病句修訂、表達方式與修辭章法皆已達到會考 5~6 級分的卓越水準！考場上只要穩健發揮，定能端出震撼張媽的思維佳餚！";
+        } else if (score >= 70) {
+          advice = `【中堅躍升級】基礎架構與思維皆稱扎實，但「${lowestCat || '會考常考病句'}」向度稍顯生疏。建議特別注意複句連接詞的搭配、介詞掩蓋主語以及動賓搭配不當，避免在語法細節失分！`;
+        } else {
+          advice = `【急需搶分救急】您在「${lowestCat || '結構與邏輯'}」上容易陷入語病或推論跳躍。請務必牢記：①抓準病句成分（主謂賓完整）；②明確區分議論與說明；③善用對比與具體事件！`;
+        }
+        prescEl.textContent = advice;
+      }
+
+      document.getElementById('diagnostic-modal').classList.remove('hidden');
+    }
+
+    function closeDiagnosticModal() {
+      document.getElementById('diagnostic-modal').classList.add('hidden');
+    }
+
+    // ==================== Teacher Admin Dashboard Flow ====================
+    function openTeacherAdminPrompt() {
+      const pin = prompt("👩‍🍳 請輸入張媽專用管理密碼：\n（提示：904905910 或 chang888）");
+      if (pin === "904905910" || pin === "chang888" || pin === "1234") {
+        document.getElementById('teacher-admin-modal').classList.remove('hidden');
+        fetchAdminData();
+      } else if (pin !== null) {
+        alert("密碼不正確！請向張媽索取管理密碼。");
+      }
+    }
+
+    function closeTeacherAdmin() {
+      document.getElementById('teacher-admin-modal').classList.add('hidden');
+    }
+
+    async function fetchAdminData() {
+      adminSubmissions = [];
+
+      const local = JSON.parse(localStorage.getItem('zm_submissions') || '[]');
+      adminSubmissions = [...local];
+
+      if (db) {
+        try {
+          const snapshot = await db.collection('zm_quiz_submissions').orderBy('timestamp', 'desc').limit(300).get();
+          const cloudList = [];
+          snapshot.forEach(doc => {
+            cloudList.push(doc.data());
+          });
+
+          if (cloudList.length > 0) {
+            const map = new Map();
+            adminSubmissions.forEach(item => map.set(`${item.studentKey}_${item.timestamp}`, item));
+            cloudList.forEach(item => map.set(`${item.studentKey}_${item.timestamp}`, item));
+            adminSubmissions = Array.from(map.values());
+          }
+        } catch (e) {
+          console.warn("Firestore query note:", e);
+        }
+      }
+
+      updateAdminKPIs();
+      renderAdminTable();
+    }
+
+    function updateAdminKPIs() {
+      const uniqueStudents = new Set(adminSubmissions.map(s => s.studentKey)).size;
+      const totalAttempts = adminSubmissions.length;
+
+      let totalScore = 0;
+      let totalSeconds = 0;
+      adminSubmissions.forEach(s => {
+        totalScore += (s.score || 0);
+        totalSeconds += (s.durationSeconds || 0);
+      });
+
+      const avgScore = totalAttempts > 0 ? (totalScore / totalAttempts).toFixed(1) : '--';
+      const avgSeconds = totalAttempts > 0 ? Math.round(totalSeconds / totalAttempts) : 0;
+
+      document.getElementById('admin-kpi-students').textContent = `${uniqueStudents} 位`;
+      document.getElementById('admin-kpi-attempts').textContent = `${totalAttempts} 次`;
+      document.getElementById('admin-kpi-avg-score').textContent = totalAttempts > 0 ? `${avgScore} 分` : '-- 分';
+      document.getElementById('admin-kpi-avg-time').textContent = totalAttempts > 0 ? formatTime(avgSeconds) : '--';
+    }
+
+    function filterAdminClass(cls) {
+      adminFilterClass = cls;
+      ['all', '904', '905', '910'].forEach(c => {
+        const btn = document.getElementById('tab-class-' + c);
+        if (btn) {
+          if (c.toUpperCase() === cls) {
+            btn.className = "px-2.5 py-1 rounded-lg bg-white text-slate-900 shadow-xs font-bold";
+          } else {
+            btn.className = "px-2.5 py-1 rounded-lg hover:text-slate-900 text-slate-600";
+          }
+        }
+      });
+      renderAdminTable();
+    }
+
+    function renderAdminTable() {
+      const tbody = document.getElementById('admin-table-body');
+      const searchKeyword = (document.getElementById('admin-search-input').value || '').trim().toLowerCase();
+      const sortBy = document.getElementById('admin-sort-by').value;
+
+      let list = adminSubmissions.filter(item => {
+        if (adminFilterClass !== 'ALL' && item.class !== adminFilterClass) return false;
+        if (searchKeyword) {
+          const matchName = (item.name || '').toLowerCase().includes(searchKeyword);
+          const matchSeat = (item.seat || '').includes(searchKeyword);
+          const matchClass = (item.class || '').includes(searchKeyword);
+          if (!matchName && !matchSeat && !matchClass) return false;
+        }
+        return true;
+      });
+
+      list.sort((a, b) => {
+        if (sortBy === 'time_desc') return (b.timestamp || 0) - (a.timestamp || 0);
+        if (sortBy === 'score_desc') return (b.score || 0) - (a.score || 0);
+        if (sortBy === 'seat_asc') {
+          const cComp = (a.class || '').localeCompare(b.class || '');
+          if (cComp !== 0) return cComp;
+          return parseInt(a.seat || '0') - parseInt(b.seat || '0');
+        }
+        if (sortBy === 'attempts_desc') return (b.attemptCount || 1) - (a.attemptCount || 1);
+        return 0;
+      });
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-10 text-slate-400">
+              尚無符合條件的作答紀錄
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map((item, idx) => {
+        const score = item.score || 0;
+        let scoreBadge = "bg-rose-100 text-rose-800";
+        if (score >= 80) scoreBadge = "bg-emerald-100 text-emerald-800 font-bold";
+        else if (score >= 60) scoreBadge = "bg-amber-100 text-amber-800 font-semibold";
+
+        return `
+          <tr class="hover:bg-amber-50/40 transition">
+            <td class="px-4 py-2.5 font-bold text-slate-900">${item.class} 班</td>
+            <td class="px-3 py-2.5 font-mono">${item.seat} 號</td>
+            <td class="px-4 py-2.5 font-bold text-slate-800">${item.name}</td>
+            <td class="px-4 py-2.5 font-mono">
+              <span class="px-2 py-0.5 rounded ${scoreBadge}">${score} 分</span>
+              <span class="text-slate-400 text-[11px] ml-1">(${item.correctCount || 0}/${item.totalQuestions || 100})</span>
+            </td>
+            <td class="px-3 py-2.5 font-mono font-semibold text-slate-700">第 ${item.attemptCount || 1} 次</td>
+            <td class="px-4 py-2.5 font-mono text-slate-600">${item.durationText || formatTime(item.durationSeconds || 0)}</td>
+            <td class="px-4 py-2.5 font-mono text-slate-500 text-[11px]">${item.submitTime || '--'}</td>
+            <td class="px-4 py-2.5 text-right">
+              <button onclick="alert('【${item.class}班 ${item.seat}號 ${item.name}】\n第 ${item.attemptCount} 次作答錯題題號：\n${item.mistakeIds || '全部答對！'}')" class="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] transition">
+                檢視錯題 (${item.mistakeCount || 0})
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ==================== CSV Export ====================
+    function exportToCSV() {
+      if (adminSubmissions.length === 0) {
+        alert("目前尚無任何作答紀錄可供匯出！");
+        return;
+      }
+
+      const headers = ["班級", "座號", "姓名", "分數", "答對題數", "總題數", "嘗試次數", "作答耗時", "繳交時間", "錯題題號"];
+      const rows = adminSubmissions.map(item => [
+        item.class || "",
+        item.seat || "",
+        item.name || "",
+        item.score || 0,
+        item.correctCount || 0,
+        item.totalQuestions || 100,
+        item.attemptCount || 1,
+        item.durationText || "",
+        item.submitTime || "",
+        `"${item.mistakeIds || ''}"`
+      ]);
+
+      let csvContent = "\uFEFF" + headers.join(",") + "\n";
+      rows.forEach(r => {
+        csvContent += r.join(",") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `張媽菜菜館_國三寫作思維作答成績總表_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Kickoff
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
